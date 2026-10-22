@@ -7,7 +7,7 @@ description: Create crafted, accurate visualizations of anatomy, neurobiology, p
 
 This skill makes visual explanations of biological structure and function. Show the real structure accurately and make its mechanism visible. Use literal anatomy for structures such as neurons, hearts, cells and organs; use a clearly identified mechanical metaphor for processes when it improves understanding (for example, a receptor and ligand as lock and key, or an ion channel as a gated valve). Never let a metaphor imply that it is the literal biology.
 
-Six biology examples ship with the skill. Open the closest one before you start. Every example is built with `node examples/<name>/build.mjs`, which writes a standalone HTML page next to the script; add `--light` for the light theme.
+Seven biology examples ship with the skill. Open the closest one before you start. Every example is built with `node examples/<name>/build.mjs`, which writes a standalone HTML page next to the script; add `--light` for the light theme.
 
 - `examples/neuron/` is a neuron with branching dendrites, myelinated axon, animated action-potential readout and hoverable synapse. It is a schematic, and its representative voltage values cite educational sources.
 - `examples/dopamine-receptors/` is a flat cross-section of a dopamine synapse onto a striatal medium spiny neuron: D1-like receptors couple Gαs/olf and raise cAMP, D2-like receptors couple Gαi/o and lower it, with the full G-protein cycle, a dopamine-level slider and a generic D2-antagonist toggle.
@@ -15,6 +15,7 @@ Six biology examples ship with the skill. Open the closest one before you start.
 - `examples/reward-addiction/` is a schematic mid-sagittal brain showing the mesolimbic pathway (VTA to nucleus accumbens, with prefrontal cortex, amygdala and hippocampus), a first-exposure versus repeated-exposure model toggle and a cue sequence. Every claim is framed as one leading model with sources.
 - `examples/semaglutide-glp1/` is a GLP-1 receptor agonist (semaglutide) acting on a pancreatic beta cell, with glucose-dependent insulin secretion, the molecule's engineered features and the central appetite and reward context.
 - `examples/estrogen-aggression/` follows testosterone through aromatase to estradiol and estrogen receptor α in an amygdala-type neuron, with an aromatase-block toggle. It states plainly that the human evidence is weak (pooled Fisher z 0.16 across 14 studies).
+- `examples/fasciola-hepatica/` is an animated schematic of the liver fluke life cycle across the host, water and pasture, and the snail. Six timed stages loop on one scene with pause, stage jumps and arrow keys; the timings cite WikiVet and one 2013 study, and the loop compresses real durations.
 
 Each example has a sources block, an educational-not-medical-advice note, a live readout driven by one small model, a pause control, hover or focus explanations and a reduced-motion still frame. Copy the closest one as a template.
 
