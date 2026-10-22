@@ -26,37 +26,45 @@ const light = process.argv.includes("--light");
 const WIDTH = 880;
 const HEIGHT = 520;
 const LOOP = 26;
+// Organisms are drawn at a size that reads on screen; the scene scales them by this factor.
+const SCALE = 1.6;
 
 // Stage starts are seconds on a 26 s loop. Durations are compressed: see the sources block.
 const STAGES = [
   {
     at: 0,
     name: "Adult in the bile ducts",
+    inset: "Adult fluke",
     note: "Adults are hermaphrodite and lay eggs into the bile. The eggs travel through the gut and leave in the feces, before any larva has formed.",
   },
   {
     at: 4,
     name: "Eggs develop in water",
-    note: "Inside each egg a miracidium forms. This needs water and warmth: about 9 to 10 days at 22 to 26 °C.",
+    inset: "Egg with a developing miracidium",
+    note: "Inside each egg a miracidium forms. This needs water and warmth: about 9 to 10 days at 22 to 26 °C.",
   },
   {
     at: 9,
     name: "Miracidia hatch and seek a snail",
+    inset: "Miracidium, ciliated",
     note: "Each miracidium swims free. It has about 3 hours to find a Galba truncatula snail, or it dies.",
   },
   {
     at: 12,
     name: "Sporocysts multiply in the snail",
+    inset: "Sporocyst with developing daughters",
     note: "The miracidium penetrates the snail and becomes a sporocyst. Its daughters multiply asexually. Snail stages take about 6 to 7 weeks in favourable conditions.",
   },
   {
     at: 16,
     name: "Cercariae leave and encyst on herbage",
+    inset: "Cercaria, then metacercaria",
     note: "Cercariae swim out of the snail and attach to wet vegetation. Each one there encysts as a metacercaria, the stage that infects the host.",
   },
   {
     at: 21,
     name: "Grazing: juvenile reaches the liver",
+    inset: "Juvenile fluke",
     note: "The animal eats the metacercariae with herbage. Juveniles excyst in the gut, cross the gut wall, and tunnel through the liver before reaching the bile ducts.",
   },
 ];
@@ -264,10 +272,30 @@ const figure = figureSvg({
   className: "fl-figure",
 });
 
+// Detail inset: the current stage's organism, enlarged. Each group is shown by live.js for its stage.
+const insetAdult = (() => {
+  const guts = [-8, -3, 2, 7].map((s) => `M${s} -5L${s} 5`).join("");
+  return `<g transform="rotate(-17)"><ellipse class="org-body" rx="20" ry="7"/><path class="org-lid" d="${guts}"/><circle class="org-sucker" cx="13" cy="0" r="2.6"/><circle class="org-sucker" cx="-6" cy="0" r="2.6"/></g>`;
+})();
+const insetSporocyst = [
+  `<ellipse class="org-cyst" rx="14" ry="9"/>`,
+  ...germPoints.map(([x, y]) => `<circle class="germ" cx="${((x + 18) * 3.5).toFixed(1)}" cy="${((y - 52) * 3.5).toFixed(1)}" r="1.8"/>`),
+].join("");
+const insetStageMarkup = [
+  insetAdult,
+  `<g transform="scale(3)">${eggShape}</g>`,
+  `<g transform="scale(2.8)">${miracidiumShape}</g>`,
+  insetSporocyst,
+  `<g transform="translate(-2 -10) scale(1.1)">${cercariaShape}</g><g transform="translate(16 8) scale(2.2)">${metacercariaShape}</g>`,
+  `<g transform="scale(3.5)">${juvenileShape}</g>`,
+].map((markup, index) => `<g class="inset-stage" data-stage="${index}" display="${index === 0 ? "inline" : "none"}">${markup}</g>`).join("");
+const insetFigure = `<svg class="fl-inset" viewBox="-32 -24 64 48" role="img" aria-label="Enlarged view of the organism for the current stage. Not to scale."><title>Enlarged detail, not to scale</title>${insetStageMarkup}</svg>`;
+
 const stageButtons = STAGES.map(
   (stage, index) =>
     `<li><button class="stage-btn" type="button" data-stage="${index}">${index + 1}. ${stage.name}</button></li>`,
 ).join("");
+const ticks = STAGES.map((stage) => `<span style="left:${((stage.at / LOOP) * 100).toFixed(2)}%"></span>`).join("");
 
 const framed = plateHtml({
   fig: "Fig 1",
@@ -275,46 +303,70 @@ const framed = plateHtml({
   hint: "Space: play or pause · ← →: previous or next stage",
   readout: `Stage 1 of ${STAGES.length} · ${STAGES[0].name}`,
   caption: "Schematic. Sizes, distances and time between stages are not to scale.",
-  body: `<div class="fl-svg">${figure}</div><div class="transport"><p class="count-out" aria-live="off"></p><button class="motion-toggle" type="button" aria-pressed="false">Pause</button></div><ol class="stage-list">${stageButtons}</ol><p class="stage-note" aria-live="polite">${STAGES[0].note}</p>`,
+  body: [
+    `<div class="fl-svg">${figure}</div>`,
+    `<div class="transport"><p class="count-out"></p><button class="motion-toggle" type="button">Pause</button></div>`,
+    `<div class="timeline"><input class="timeline-range" type="range" min="0" max="${LOOP}" step="0.05" value="0" aria-label="Position in the 26 second loop" aria-valuetext="${STAGES[0].name}"><div class="timeline-ticks" aria-hidden="true">${ticks}</div></div>`,
+    `<div class="detail"><figure class="inset">${insetFigure}<figcaption class="inset-caption">${STAGES[0].inset}. Enlarged, not to scale.</figcaption></figure><div class="stage-copy"><p class="stage-note">${STAGES[0].note}</p></div></div>`,
+    `<ol class="stage-list">${stageButtons}</ol>`,
+    `<p class="stage-status sr-only" aria-live="polite"></p>`,
+  ].join(""),
 });
 
 const sources = `<footer class="bio-sources"><p>Timings and biology are from WikiVet’s <a href="https://en.wikivet.net/Fasciola_hepatica">Fasciola hepatica entry</a>: prepatent period 10 to 12 weeks; eggs need about 9 to 10 days at 22 to 26 °C to form miracidia; a miracidium must find a snail within about 3 hours; snail stages take about 6 to 7 weeks in favourable conditions; <i>Galba truncatula</i> is almost the only intermediate host in Europe. The average of 203 cercariae per miracidium comes from one 2013 experiment in <i>G. truncatula</i> at 26 °C (<a href="https://alicia.concytec.gob.pe/vufind/Record/REVUNFV_4dd4f1f89615d1e02865645db0f6056e">record</a>); treat it as an estimate. The animation shows only a handful of cercariae.</p><p>The 26-second loop compresses real durations; the stage times are not a clock. For education only; this figure is not medical advice.</p></footer>`;
 
 const style = `
-.fl-figure .bio-label{fill:var(--anatomy-text);font:9px var(--anatomy-mono);letter-spacing:.015em}
-.fl-figure .bio-label-line{fill:none;stroke:var(--anatomy-faint);stroke-width:.65}
-.fl-figure .org-body{fill:var(--anatomy-face);stroke:var(--anatomy-lit);stroke-width:.9}
-.fl-figure .org-lid{fill:none;stroke:var(--anatomy-hi);stroke-width:.7}
-.fl-figure .org-embryo{fill:var(--anatomy-mid)}
-.fl-figure .org-cilia{fill:none;stroke:var(--anatomy-hi);stroke-width:.6;stroke-linecap:round}
-.fl-figure .org-tail{fill:none;stroke:var(--anatomy-hi);stroke-width:.8;stroke-linecap:round}
-.fl-figure .org-cyst{fill:var(--anatomy-face);stroke:var(--anatomy-lit);stroke-width:1}
-.fl-figure .org-cyst-core{fill:var(--anatomy-mid)}
-.fl-figure .org-juvenile{fill:var(--anatomy-face);stroke:var(--anatomy-hi);stroke-width:.8}
-.fl-figure .germ{fill:var(--anatomy-hi)}
+:is(.fl-figure,.fl-inset) .org-body{fill:var(--anatomy-face);stroke:var(--anatomy-lit);stroke-width:.9}
+:is(.fl-figure,.fl-inset) .org-lid{fill:none;stroke:var(--anatomy-hi);stroke-width:.7}
+:is(.fl-figure,.fl-inset) .org-embryo{fill:var(--anatomy-mid)}
+:is(.fl-figure,.fl-inset) .org-cilia{fill:none;stroke:var(--anatomy-hi);stroke-width:.6;stroke-linecap:round}
+:is(.fl-figure,.fl-inset) .org-tail{fill:none;stroke:var(--anatomy-hi);stroke-width:.8;stroke-linecap:round}
+:is(.fl-figure,.fl-inset) .org-cyst{fill:var(--anatomy-face);stroke:var(--anatomy-lit);stroke-width:1}
+:is(.fl-figure,.fl-inset) .org-cyst-core{fill:var(--anatomy-mid)}
+:is(.fl-figure,.fl-inset) .org-juvenile{fill:var(--anatomy-face);stroke:var(--anatomy-hi);stroke-width:.8}
+:is(.fl-figure,.fl-inset) .org-sucker{fill:none;stroke:var(--anatomy-lit);stroke-width:.8}
+:is(.fl-figure,.fl-inset) .germ{fill:var(--anatomy-hi)}
+.fl-figure .bio-label{fill:var(--anatomy-text);font:11px var(--anatomy-mono);letter-spacing:.015em}
+.fl-figure .bio-label-line{fill:none;stroke:var(--anatomy-mid);stroke-width:.7}
 .fl-figure .guide-line{fill:none;stroke:var(--anatomy-muted);stroke-width:.7;stroke-dasharray:2 3}
 .fl-figure .guide{transition:opacity 240ms ease}
 .fl-figure .mover{will-change:transform}
 .fl-svg{overflow-x:auto}
 .fl-figure{min-width:640px}
 .transport{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:8px}
-.count-out{margin:0;font:12px var(--anatomy-mono);color:var(--anatomy-muted)}
-.motion-toggle{border:1px solid var(--anatomy-faint);background:transparent;color:var(--anatomy-text);font:12px var(--anatomy-mono);padding:6px 10px;cursor:pointer;flex:none}
-.motion-toggle:focus-visible,.stage-btn:focus-visible{outline:2px solid var(--anatomy-lit);outline-offset:3px}
+.count-out{margin:0;font:12px/1.5 var(--anatomy-mono);color:var(--anatomy-text)}
+.motion-toggle{min-height:44px;min-width:44px;border:1px solid var(--anatomy-faint);background:transparent;color:var(--anatomy-text);font:12px var(--anatomy-mono);padding:6px 12px;cursor:pointer;flex:none}
+.motion-toggle:focus-visible,.stage-btn:focus-visible,.timeline-range:focus-visible{outline:2px solid var(--anatomy-lit);outline-offset:3px}
 .motion-toggle:disabled{opacity:.5;cursor:default}
-.stage-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:6px;list-style:none;margin:14px 0 0;padding:0}
-.stage-btn{width:100%;text-align:left;border:1px solid var(--anatomy-faint);background:transparent;color:var(--anatomy-text);font:12px/1.4 var(--anatomy-mono);padding:8px 10px;cursor:pointer}
+.timeline{margin-top:12px}
+.timeline-range{width:100%;margin:0;accent-color:var(--anatomy-lit);cursor:pointer}
+.timeline-ticks{position:relative;height:8px;margin:0 7px}
+.timeline-ticks span{position:absolute;top:0;width:1px;height:8px;background:var(--anatomy-mid)}
+.detail{display:grid;grid-template-columns:minmax(0,220px) minmax(0,1fr);gap:20px;align-items:start;margin-top:16px}
+.inset{margin:0}
+.fl-inset{display:block;width:100%;height:auto;border:1px solid var(--anatomy-faint)}
+.inset-caption{margin-top:6px;font:12px/1.5 var(--anatomy-mono);color:var(--anatomy-text)}
+.stage-note{margin:0;color:var(--anatomy-text);font-size:14px;line-height:1.55;max-width:70ch}
+.stage-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;list-style:none;margin:16px 0 0;padding:0}
+.stage-list li{display:flex}
+.stage-btn{flex:1;width:100%;min-height:44px;text-align:left;border:1px solid var(--anatomy-faint);background:transparent;color:var(--anatomy-text);font:12px/1.4 var(--anatomy-mono);padding:8px 10px;cursor:pointer}
 .stage-btn[aria-current="step"]{border-color:var(--anatomy-lit);color:var(--anatomy-strong)}
-.stage-note{min-height:3.4em;margin:12px 0 0;color:var(--anatomy-text);font-size:14px;line-height:1.55;max-width:70ch}
-.bio-sources{max-width:760px;margin:14px auto;color:var(--anatomy-muted);font-size:12px;line-height:1.65}
-.bio-sources a{color:var(--anatomy-text);text-underline-offset:2px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.bio-sources{max-width:760px;margin:14px auto;color:var(--anatomy-text);font-size:12px;line-height:1.65}
+.bio-sources a{color:var(--anatomy-strong);text-underline-offset:2px}
+@media(max-width:560px){
+  .detail{grid-template-columns:minmax(0,1fr)}
+  .fl-inset{max-width:220px}
+  .stage-list{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
 @media(prefers-reduced-motion:reduce){.fl-figure .guide{transition:none}}
 `;
 
 const live = readFileSync(join(HERE, "live.js"), "utf8");
 const DATA = {
   loop: LOOP,
-  stages: STAGES.map(({ at, name, note }) => ({ at, name, note })),
+  scale: SCALE,
+  stages: STAGES.map(({ at, name, note, inset }) => ({ at, name, note, inset })),
   movers: moverConfig,
 };
 const script = `const DATA = ${JSON.stringify(DATA)};\n${live}`;
