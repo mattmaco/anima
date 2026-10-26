@@ -1,5 +1,7 @@
 // y-values against one swept param, with a marker at the current value.
 // Spec: curves: { x: "<param>", series: [{ key, label }], sweep: 101, fixed: { <param>: value } }
+import { esc } from "../esc.mjs";
+
 const PAD = { l: 44, r: 92, t: 12, b: 40 };
 
 export const curves = {
@@ -11,8 +13,8 @@ export const curves = {
     const param = spec.params[c.x];
     const xTick = (t) => `<line class="study-axis" x1="${x0 + (x1 - x0) * t}" y1="${y0}" x2="${x0 + (x1 - x0) * t}" y2="${y0 + 4}"/><text class="study-tick" x="${x0 + (x1 - x0) * t}" y="${y0 + 16}" text-anchor="middle">${+(param.min + (param.max - param.min) * t).toFixed(2)}</text>`;
     const yTick = (t) => `<line class="study-grid" x1="${x0}" y1="${y0 - (y0 - y1) * t}" x2="${x1}" y2="${y0 - (y0 - y1) * t}"/><text class="study-tick" x="${x0 - 8}" y="${y0 - (y0 - y1) * t + 3.5}" text-anchor="end">${t}</text>`;
-    const series = c.series.map((s, i) => `<path id="curve-${s.key}" class="study-series study-s${i}"/><circle id="dot-${s.key}" class="study-dot study-s${i}" r="4"/><text id="label-${s.key}" class="study-label study-s${i}" x="${x1 + 8}" tabindex="0" data-note="${(spec.notes?.[s.key] ?? s.label).replace(/"/g, "&quot;")}">${s.label}</text>`).join("");
-    return `<g class="study-curves">${ticks.map(yTick).join("")}${ticks.map(xTick).join("")}<line class="study-axis" x1="${x0}" y1="${y0}" x2="${x1}" y2="${y0}"/><line class="study-axis" x1="${x0}" y1="${y0}" x2="${x0}" y2="${y1}"/><text class="study-axis-label" x="${(x0 + x1) / 2}" y="${y0 + 34}" text-anchor="middle">${param.label}</text><text class="study-axis-label" transform="translate(${box.x + 10} ${(y0 + y1) / 2}) rotate(-90)" text-anchor="middle">frequency</text><line id="curve-marker" class="study-marker" y1="${y1}" y2="${y0}"/>${series}</g>`;
+    const series = c.series.map((s, i) => `<path id="curve-${s.key}" class="study-series study-s${i}"/><circle id="dot-${s.key}" class="study-dot study-s${i}" r="4"/><text id="label-${s.key}" class="study-label study-s${i}" x="${x1 + 8}" tabindex="0" data-note="${esc(spec.notes?.[s.key] ?? s.label)}">${esc(s.label)}</text>`).join("");
+    return `<g class="study-curves">${ticks.map(yTick).join("")}${ticks.map(xTick).join("")}<line class="study-axis" x1="${x0}" y1="${y0}" x2="${x1}" y2="${y0}"/><line class="study-axis" x1="${x0}" y1="${y0}" x2="${x0}" y2="${y1}"/><text class="study-axis-label" x="${(x0 + x1) / 2}" y="${y0 + 34}" text-anchor="middle">${esc(param.label)}</text><text class="study-axis-label" transform="translate(${box.x + 10} ${(y0 + y1) / 2}) rotate(-90)" text-anchor="middle">frequency</text><line id="curve-marker" class="study-marker" y1="${y1}" y2="${y0}"/>${series}</g>`;
   },
   render: (svg, data, params, box, ctx) => {
     const c = ctx.spec.curves;
