@@ -39,3 +39,22 @@ export async function openPage(browser, url, { width = 1000 } = {}) {
   await page.goto(url);
   return { page, errors, requests };
 }
+
+// At phone width the figure must keep its text legible (rendered ≥ 9 px), inside the plate and free of collisions.
+export const phoneFaults = (page) => page.evaluate(() => {
+  const faults = [];
+  const plate = document.querySelector(".iso-plate").getBoundingClientRect();
+  const texts = [...document.querySelectorAll(".study-figure text")].filter((t) => t.textContent.trim() && t.getBBox().width > 0);
+  for (const t of texts) {
+    const m = t.getScreenCTM(), px = parseFloat(getComputedStyle(t).fontSize) * Math.hypot(m.a, m.b);
+    if (px < 9) faults.push(`${t.textContent.trim()} at ${px.toFixed(1)}px`);
+  }
+  const corner = document.querySelector("[data-readout]").getBoundingClientRect();
+  if (corner.left < plate.left || corner.right > plate.right) faults.push("readout outside the plate");
+  const boxes = texts.map((t) => ({ text: t.textContent.trim(), ...t.getBoundingClientRect().toJSON() }));
+  for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) {
+    const a = boxes[i], b = boxes[j];
+    if (a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1) faults.push(`${a.text} × ${b.text}`);
+  }
+  return faults;
+});

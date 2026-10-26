@@ -7,8 +7,9 @@ import { lib } from "./lib.mjs";
 import { curves } from "./views/curves.mjs";
 import { popgrid } from "./views/popgrid.mjs";
 import { replicates } from "./views/replicates.mjs";
+import { trajectory } from "./views/trajectory.mjs";
 
-export const VIEWS = ["curves", "replicates", "popgrid"];
+export const VIEWS = ["curves", "replicates", "popgrid", "trajectory"];
 const REQUIRED = ["chunk", "fig", "title", "view", "params", "model", "readout", "states", "sources", "simplified"];
 
 // Turn a function back into a value from its source alone, so anything it closes over is lost.
@@ -75,11 +76,11 @@ export function probeModel(spec) {
   return errors;
 }
 
-const VIEW_MODULES = { curves, replicates, popgrid };
+const VIEW_MODULES = { curves, replicates, popgrid, trajectory };
 // Two layouts per page: wide (the static SVG) and narrow, which the runtime swaps in on phones so text stays legible.
 const LAYOUT = {
-  wide: { width: 760, height: { curves: 320, replicates: 300, popgrid: 260 } },
-  narrow: { width: 360, height: { curves: 280, replicates: 480, popgrid: 240 } },
+  wide: { width: 760, height: { curves: 320, replicates: 300, popgrid: 260, trajectory: 300 } },
+  narrow: { width: 360, height: { curves: 280, replicates: 480, popgrid: 240, trajectory: 280 } },
 };
 const RUNTIME = readFileSync(new URL("./runtime.js", import.meta.url), "utf8");
 const TOP = 40;
@@ -144,6 +145,8 @@ body[data-theme="light"]{--study-red-ink:#d12f36}
 .study-meta h2{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--anatomy-muted);margin:18px 0 4px}
 .study-meta ul{margin:0;padding-left:18px}
 .study-edu{color:var(--anatomy-muted);font-size:12px}
+.study-mark{stroke:var(--anatomy-text);stroke-width:1;stroke-dasharray:5 4}
+.study-mark-label{fill:var(--anatomy-text)}
 .study-run{fill:none;stroke:var(--anatomy-mid);stroke-width:1;opacity:.75}
 .study-mean{fill:none;stroke:var(--anatomy-strong);stroke-width:2}
 .study-expected{fill:none;stroke:var(--anatomy-blue);stroke-width:1.5;stroke-dasharray:5 4}
