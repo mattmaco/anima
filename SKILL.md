@@ -45,6 +45,8 @@ Avoid abstract boxes-and-arrows when a recognizable structure can be shown. Use 
 
 Work in this order. Write the concept and the parts list before any geometry. Most of the quality is decided there.
 
+**Study figures.** When the user hands over study notes or a study guide and wants figures to revise with, follow `references/study.md` instead of the steps below: one small spec per hard chunk, built by `study/build.mjs`, read from the notes as text.
+
 1. **Size it before you start.** Tell the user which size the request is and roughly how long it will take, before any other work.
    - **Figure**: one mechanism, 40–80 parts, SVG with at most one WebGL layer. About 30–90 minutes. Build it without asking.
    - **Hero**: a dense object, several WebGL layers or one 3D subject, 80–150 parts. About 2–4 hours. Say so, then build it unless the user asked for something quick.
@@ -169,6 +171,7 @@ Read these as you need them:
 - `references/kit.md`: the API, with signatures and examples.
 - `references/motion.md`: live behaviour (loops, springs, tours, pointer, keyboard, accessibility, reduced motion), plus envelopes for one-shot events, exploded views, depth re-sorting and arming, in vanilla JS and React.
 - `references/react.md`: the React/Next.js server/client split, element props and the large-payload key-warning trap.
+- `references/study.md`: study mode, which turns study notes into model-driven figures from short specs, with the low-token workflow and lessons from each round. The spec format and embed contract are in `study/README.md`.
 - `references/verify.md`: the `capture.mjs` and `drive.mjs` commands, the review checklist (including shaders) and common faults.
 - `references/webgl.md`: shaders inside the drawing: when one earns its place, the layer stack, the camera contract, ray-marching in the iso camera, the full API with a minimal page, the craft rules with the bugs that taught them, the light theme (inks on paper, per-phenomenon recipes, the reviewers' faults), and how to verify them.
 - `references/3d.md`: the optional 3D mode: groups and poses, live layers, convex parts and their rules, materials, free groups, hinge chains, painter's order, static clutter around a turntable, shaders that follow the turn, the orbit audit, browser checks, performance and limits.
