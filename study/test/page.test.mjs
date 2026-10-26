@@ -115,3 +115,34 @@ describe("drift page", () => {
     assert.equal(await page.evaluate(() => window.anima.gen), 100);
   });
 });
+
+const overlaps = (page) => page.evaluate(() => {
+  const boxes = [...document.querySelectorAll(".study-figure text")]
+    .filter((t) => t.textContent.trim() && t.getBBox().width > 0)
+    .map((t) => ({ text: t.textContent.trim(), ...t.getBoundingClientRect().toJSON() }));
+  const hits = [];
+  for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) {
+    const a = boxes[i], b = boxes[j];
+    if (a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1) hits.push(`${a.text} × ${b.text}`);
+  }
+  return hits;
+});
+
+test("no text overlaps in the Hardy-Weinberg figure", { skip }, async () => {
+  const { page } = await openPage(browser, pathToFileURL(demo).href);
+  for (const state of ["p=0.5", "p=0.6"]) {
+    await page.evaluate((s) => window.anima.set(s), state);
+    assert.deepEqual(await overlaps(page), []);
+  }
+});
+
+test("no text overlaps in the drift figure", { skip }, async () => {
+  const { buildPage } = await import("../build.mjs");
+  const spec = (await import("./fixtures/drift.mjs")).default;
+  const file = join(mkdtempSync(join(tmpdir(), "study-drift-")), "drift.html");
+  writeFileSync(file, buildPage(spec));
+  const page = await browser.newPage({ reducedMotion: "reduce" });
+  await page.goto(pathToFileURL(file).href);
+  await page.waitForFunction(() => window.anima);
+  assert.deepEqual(await overlaps(page), []);
+});

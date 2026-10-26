@@ -31,8 +31,14 @@ export const curves = {
       });
       for (const s of c.series) {
         svg.getElementById(`curve-${s.key}`).setAttribute("d", rows.map(([x, m], i) => `${i ? "L" : "M"}${sx(x).toFixed(1)},${sy(m[s.key]).toFixed(1)}`).join(""));
-        svg.getElementById(`label-${s.key}`).setAttribute("y", (sy(rows.at(-1)[1][s.key]) + 4).toFixed(1));
       }
+      // Labels sit at each curve's right end, pushed apart so they never overlap.
+      const labels = c.series.map((s) => ({ key: s.key, y: sy(rows.at(-1)[1][s.key]) + 4 })).sort((a, b) => a.y - b.y);
+      for (let i = 1; i < labels.length; i++) labels[i].y = Math.max(labels[i].y, labels[i - 1].y + 14);
+      const over = labels.at(-1).y - (y0 + 4);
+      if (over > 0) for (const label of labels) label.y -= over;
+      for (let i = labels.length - 2; i >= 0; i--) labels[i].y = Math.min(labels[i].y, labels[i + 1].y - 14);
+      for (const label of labels) svg.getElementById(`label-${label.key}`).setAttribute("y", label.y.toFixed(1));
     }
     const x = data[c.x] ?? params[c.x];
     const marker = svg.getElementById("curve-marker");

@@ -21,7 +21,8 @@ export const popgrid = {
       const c = Math.cos(Math.PI / 6), s = 0.5;
       const area = { w: box.w - 240, h: box.h - 40 };
       const unit = Math.min(area.w / (2 * cols * c), (area.h - 10) / (2 * cols * s + 0.6), 26);
-      const ox = box.x + 36 + area.w / 2, oy = box.y + 28 + 0.6 * unit;
+      const gridH = (2 * cols * s + 0.6) * unit;
+      const ox = box.x + 36 + area.w / 2, oy = box.y + 28 + (area.h - gridH) / 2 + 0.6 * unit;
       const pt = (i, j, z) => `${(ox + (i - j) * c * unit).toFixed(1)},${(oy + (i + j) * s * unit - z * unit).toFixed(1)}`;
       const h = 0.55, gap = 0.12;
       const cells = Array.from({ length: n }, (_, k) => [k % cols, Math.floor(k / cols), k]).sort((a, b) => a[0] + a[1] - (b[0] + b[1]));

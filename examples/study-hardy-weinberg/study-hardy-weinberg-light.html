@@ -136,6 +136,16 @@ body{margin:0;background:var(--anatomy-page);color:var(--anatomy-text);font:14px
 .study-meta h2{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--anatomy-muted);margin:18px 0 4px}
 .study-meta ul{margin:0;padding-left:18px}
 .study-edu{color:var(--anatomy-muted);font-size:12px}
+.study-run{fill:none;stroke:var(--anatomy-mid);stroke-width:1;opacity:.75}
+.study-mean{fill:none;stroke:var(--anatomy-strong);stroke-width:2}
+.study-expected{fill:none;stroke:var(--anatomy-blue);stroke-width:1.5;stroke-dasharray:5 4}
+.study-key{fill:var(--anatomy-text);font:11px var(--anatomy-mono);outline:none}
+.study-key.study-s0{fill:var(--anatomy-blue)}
+.study-axis-label[tabindex]{outline:none}
+.study-swatch.study-s0{fill:var(--anatomy-blue)}.study-swatch.study-s1{fill:var(--anatomy-strong)}.study-swatch.study-s2{fill:var(--anatomy-red)}
+.study-ind polygon{stroke:var(--anatomy-card);stroke-width:.4}
+.study-ind .l{opacity:.78}.study-ind .r{opacity:.6}
+.study-ind.g2 polygon{fill:var(--anatomy-blue)}.study-ind.g1 polygon{fill:var(--anatomy-strong)}.study-ind.g0 polygon{fill:var(--anatomy-red)}
 @media (max-width:560px){.iso-plate-corner[data-corner="hint"]{display:none}}
 </style><figure class="iso-figure"><div class="iso-plate"><div class="iso-plate-corners" aria-hidden="true"><span class="iso-plate-corner" data-corner="fig">Fig 1</span><span class="iso-plate-corner" data-corner="title">Hardy-Weinberg genotypes</span><span class="iso-plate-corner" data-corner="hint">Drag a slider · Space: pause</span><span class="iso-plate-corner" data-corner="readout" data-readout></span></div><svg xmlns="http://www.w3.org/2000/svg" class="iso-svg study-figure" viewBox="0 0 760 404" role="img" aria-label="Hardy-Weinberg genotypes. Interactive figure; use the controls below."><g class="study-curves"><line class="study-grid" x1="64" y1="320" x2="648" y2="320"/><text class="study-tick" x="56" y="323.5" text-anchor="end">0</text><line class="study-grid" x1="64" y1="253" x2="648" y2="253"/><text class="study-tick" x="56" y="256.5" text-anchor="end">0.25</text><line class="study-grid" x1="64" y1="186" x2="648" y2="186"/><text class="study-tick" x="56" y="189.5" text-anchor="end">0.5</text><line class="study-grid" x1="64" y1="119" x2="648" y2="119"/><text class="study-tick" x="56" y="122.5" text-anchor="end">0.75</text><line class="study-grid" x1="64" y1="52" x2="648" y2="52"/><text class="study-tick" x="56" y="55.5" text-anchor="end">1</text><line class="study-axis" x1="64" y1="320" x2="64" y2="324"/><text class="study-tick" x="64" y="336" text-anchor="middle">0</text><line class="study-axis" x1="210" y1="320" x2="210" y2="324"/><text class="study-tick" x="210" y="336" text-anchor="middle">0.25</text><line class="study-axis" x1="356" y1="320" x2="356" y2="324"/><text class="study-tick" x="356" y="336" text-anchor="middle">0.5</text><line class="study-axis" x1="502" y1="320" x2="502" y2="324"/><text class="study-tick" x="502" y="336" text-anchor="middle">0.75</text><line class="study-axis" x1="648" y1="320" x2="648" y2="324"/><text class="study-tick" x="648" y="336" text-anchor="middle">1</text><line class="study-axis" x1="64" y1="320" x2="648" y2="320"/><line class="study-axis" x1="64" y1="320" x2="64" y2="52"/><text class="study-axis-label" x="356" y="354" text-anchor="middle">p (frequency of A1)</text><text class="study-axis-label" transform="translate(30 186) rotate(-90)" text-anchor="middle">frequency</text><line id="curve-marker" class="study-marker" y1="52" y2="320"/><path id="curve-AA" class="study-series study-s0"/><circle id="dot-AA" class="study-dot study-s0" r="4"/><text id="label-AA" class="study-label study-s0" x="656" tabindex="0" data-note="Both alleles A1: probability p × p.">A1A1 = p²</text><path id="curve-Aa" class="study-series study-s1"/><circle id="dot-Aa" class="study-dot study-s1" r="4"/><text id="label-Aa" class="study-label study-s1" x="656" tabindex="0" data-note="Two ways to get one of each (A1 then A2, or A2 then A1), so 2pq. It peaks at 0.5 when p = q = 0.5.">A1A2 = 2pq</text><path id="curve-aa" class="study-series study-s2"/><circle id="dot-aa" class="study-dot study-s2" r="4"/><text id="label-aa" class="study-label study-s2" x="656" tabindex="0" data-note="Both alleles A2: q × q. For a recessive trait this is the only visible class, so q = √(A2A2).">A2A2 = q²</text></g></svg></div></figure><div class="study-controls" role="group" aria-label="Model controls"><label><span>start from <output for="param-mode"></output></span><select id="param-mode"><option value="allele">allele</option><option value="recessive">recessive</option></select></label><label data-when="{&quot;mode&quot;:&quot;allele&quot;}"><span>p (frequency of A1) <output for="param-p"></output></span><input id="param-p" type="range" min="0" max="1" step="0.01" value="0.5"></label><label data-when="{&quot;mode&quot;:&quot;recessive&quot;}"><span>observed A2A2 frequency <output for="param-aa"></output></span><input id="param-aa" type="range" min="0" max="0.25" step="0.001" value="0.04"></label></div><div class="study-states" role="group" aria-label="Named states"><button type="button" data-state="p=0.5">p=0.5</button><button type="button" data-state="p=0.6">p=0.6</button></div><p class="study-note" aria-live="polite">Hover or focus a label for a note.</p><section class="study-meta"><h2>Sources</h2><ul><li>Hardy-Weinberg principle as stated in introductory evolution and genetics textbooks: with random mating and no evolutionary processes, genotype frequencies are p², 2pq and q².</li></ul><h2>Simplified</h2><ul><li>One locus with two alleles; diploid, sexual, non-overlapping generations.</li><li>Random mating; no selection, mutation, migration or drift (infinite population).</li><li>The recessive estimate assumes the population is in Hardy-Weinberg equilibrium.</li></ul><p class="study-edu">Educational study figure. Check it against your course materials.</p></section></main><script type="module">const SPEC = {"chunk":2,"fig":"Fig 1","title":"Hardy-Weinberg genotypes","view":"curves","curves":{"x":"p","sweep":101,"fixed":{"mode":"allele"},"series":[{"key":"AA","label":"A1A1 = p²"},{"key":"Aa","label":"A1A2 = 2pq"},{"key":"aa","label":"A2A2 = q²"}]},"params":{"mode":{"options":["allele","recessive"],"value":"allele","label":"start from"},"p":{"min":0,"max":1,"step":0.01,"value":0.5,"label":"p (frequency of A1)","when":{"mode":"allele"}},"aa":{"min":0,"max":0.25,"step":0.001,"value":0.04,"label":"observed A2A2 frequency","when":{"mode":"recessive"}}},"states":{"p=0.5":{"mode":"allele","p":0.5},"p=0.6":{"mode":"allele","p":0.6}},"notes":{"AA":"Both alleles A1: probability p × p.","Aa":"Two ways to get one of each (A1 then A2, or A2 then A1), so 2pq. It peaks at 0.5 when p = q = 0.5.","aa":"Both alleles A2: q × q. For a recessive trait this is the only visible class, so q = √(A2A2)."},"sources":["Hardy-Weinberg principle as stated in introductory evolution and genetics textbooks: with random mating and no evolutionary processes, genotype frequencies are p², 2pq and q²."],"simplified":["One locus with two alleles; diploid, sexual, non-overlapping generations.","Random mating; no selection, mutation, migration or drift (infinite population).","The recessive estimate assumes the population is in Hardy-Weinberg equilibrium."]};
 const lib = {mulberry32: (seed) => {
@@ -198,8 +208,14 @@ const VIEWS = [{ name: "curves", box: {"x":20,"y":40,"w":720,"h":320}, render: (
       });
       for (const s of c.series) {
         svg.getElementById(`curve-${s.key}`).setAttribute("d", rows.map(([x, m], i) => `${i ? "L" : "M"}${sx(x).toFixed(1)},${sy(m[s.key]).toFixed(1)}`).join(""));
-        svg.getElementById(`label-${s.key}`).setAttribute("y", (sy(rows.at(-1)[1][s.key]) + 4).toFixed(1));
       }
+      // Labels sit at each curve's right end, pushed apart so they never overlap.
+      const labels = c.series.map((s) => ({ key: s.key, y: sy(rows.at(-1)[1][s.key]) + 4 })).sort((a, b) => a.y - b.y);
+      for (let i = 1; i < labels.length; i++) labels[i].y = Math.max(labels[i].y, labels[i - 1].y + 14);
+      const over = labels.at(-1).y - (y0 + 4);
+      if (over > 0) for (const label of labels) label.y -= over;
+      for (let i = labels.length - 2; i >= 0; i--) labels[i].y = Math.min(labels[i].y, labels[i + 1].y - 14);
+      for (const label of labels) svg.getElementById(`label-${label.key}`).setAttribute("y", label.y.toFixed(1));
     }
     const x = data[c.x] ?? params[c.x];
     const marker = svg.getElementById("curve-marker");
@@ -256,20 +272,46 @@ function draw() {
   readoutEl.textContent = readout(data, params, ctx.gen);
 }
 
-function update() {
+function update(animate = true) {
   data = model({ ...params }, lib.mulberry32(SPEC.seed ?? 1), lib);
-  ctx.cache.run = null;
-  restart();
+  restart(animate);
   syncControls();
 }
 
-// Static figures draw once; stepped figures (Task 3) override restart to animate.
-let restart = () => draw();
+// Stepped figures reveal one generation every STEP_MS; static figures just draw.
+const STEP_MS = 50;
+const stepped = Boolean(SPEC.replicates);
+const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+let visible = true;
+let rafId = 0;
+let lastStep = 0;
 
-function set(target) {
+function tick(time) {
+  rafId = 0;
+  if (!playing || !visible) return;
+  if (time - lastStep >= STEP_MS) {
+    lastStep = time;
+    ctx.gen = Math.min(ctx.gen + 1, ctx.generations);
+    draw();
+  }
+  if (ctx.gen >= ctx.generations) { playing = false; return; }
+  rafId = window.requestAnimationFrame(tick);
+}
+
+function restart(animate) {
+  if (!stepped) { draw(); return; }
+  ctx.generations = data.runs[0].length - 1;
+  const run = animate && !reduced;
+  ctx.gen = run ? 0 : ctx.generations;
+  playing = false;
+  draw();
+  if (run) play();
+}
+
+function set(target, animate = true) {
   const partial = typeof target === "string" ? SPEC.states[target] : target;
   if (!partial || typeof partial !== "object" || !apply(partial)) return false;
-  update();
+  update(animate);
   return true;
 }
 
@@ -295,8 +337,19 @@ const showNote = (event) => {
 document.addEventListener("pointerover", showNote);
 document.addEventListener("focusin", showNote);
 
-function play() { playing = true; }
+function play() {
+  if (!stepped || reduced) return;
+  if (ctx.gen >= ctx.generations) { ctx.gen = 0; draw(); }
+  playing = true;
+  if (!rafId) rafId = window.requestAnimationFrame(tick);
+}
 function pause() { playing = false; }
+if (stepped && "IntersectionObserver" in window) {
+  new IntersectionObserver(([entry]) => {
+    visible = entry.isIntersecting;
+    if (visible && playing && !rafId) rafId = window.requestAnimationFrame(tick);
+  }).observe(svg);
+}
 document.addEventListener("keydown", (event) => {
   if (event.code !== "Space" || /INPUT|SELECT|BUTTON|TEXTAREA/.test(document.activeElement?.tagName ?? "")) return;
   event.preventDefault();
@@ -304,7 +357,7 @@ document.addEventListener("keydown", (event) => {
 });
 
 const fromHash = location.hash.match(/^#state=(.*)$/);
-if (!(fromHash && set(decodeURIComponent(fromHash[1])))) update();
-window.anima = { set, params, play, pause };
+if (!(fromHash && set(decodeURIComponent(fromHash[1]), !embedded))) update(!embedded);
+window.anima = { set, params, play, pause, get gen() { return ctx.gen; } };
 if (embedded) window.parent.postMessage({ type: "anima:ready", chunk: SPEC.chunk, states: Object.keys(SPEC.states) }, "*");
 </script></body></html>
