@@ -35,3 +35,10 @@ Build one or two figures per round, picking chunks that need different views, so
 - Mutation-selection frequencies are around 10⁻⁴; a 0–1 axis shows a flat line. `y: "auto"` picks a round top (1, 2, 2.5 or 5 × 10ⁿ). Draw marks above series, or the dashed q* disappears under a run that has settled on it.
 - Do not invent a parameter to reproduce a slide claim that omits it (the lava-field "about 400 generations" gives no s); list it under `simplified` instead.
 
+- **Round 3 (balancing vs disruptive selection, effective population size).** Both figures used `trajectory`, with no new view. Several starting frequencies as series against one dashed p* mark show stable vs unstable at a glance: runs converge (overdominance, negative frequency dependence) or diverge (underdominance, positive). Give over- and underdominance the same p* so that only the stability differs.
+- `when` tests equality only. Split a four-way mode into two selects (fitness depends on genotype or frequency × balancing or disruptive); here that also matched the notes' own key distinction.
+- When the notes give no numbers (no fitness values for sickle cell, NZW/NZB mice, snails or sitters and rovers), name the states after the examples, say first in `simplified` that every value is schematic, and label any standard formula the slides omit (p* = t/(s + t)) as not from the slides.
+- Plot heterozygosity as H/H₀ when the notes give no starting H; the 1/2Ne decay is the point, not the level.
+- Normalise ω in a readout to the most fit genotype or phenotype: the notes define ω as proportion ÷ most fit, so ω > 1 contradicts them.
+- A fourth series is green, and its 11 px label was 3.05:1 on the light card. Light theme now uses `--study-green-ink: #1f7a50` (5.1:1), and a page test checks every series label colour in both themes.
+- Changing `#state=` on an open page does not reload it; a checking script must click the state buttons (or call `anima.set`) or it reads the first state every time.

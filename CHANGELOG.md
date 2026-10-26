@@ -13,6 +13,7 @@ All notable changes to this project are recorded here. The format follows [Keep 
 ### Changed
 
 - Study figures: a narrow layout swapped in on phones (text stays at least 9 px at 390 px), worked-example buttons above the sliders that show the active state, a wrapping readout, a popgrid key beside the grid, and AA contrast for tick and light-theme red text. `anima:set` now accepts only own params and states, sent from the embedding page; a malformed `#state=` link falls back to the first state.
+- Study figures: light-theme green series labels use a darker ink (`--study-green-ink`, 5.1:1), so a fourth trajectory series passes AA; a page test checks every series label colour in both themes.
 
 ## [0.1.0] - 2026-10-13
 
