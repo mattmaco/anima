@@ -9,6 +9,7 @@ All notable changes to this project are recorded here. The format follows [Keep 
 - Study mode (`study/`): model-driven figures built from 1–2 KB specs for turning study notes into interactive figures, with `curves`, `replicates` and `popgrid` views, seeded drift simulation, named states, a `manifest.json` and a postMessage embed contract for reader apps. Includes a public `study-hardy-weinberg` example and the workflow in `references/study.md`.
 - `sunflower-bend`, a live figure of BendLab's two-state phototropism model (sensing lag, saturating bend rate), with parameter sliders, a flip-the-light option and a trajectory chart that shows when the rate limit cannot be read from the data, and three fitted presets supplied by BendLab's author. Credited to BendLab, with a link to its repository.
 - Study mode `trajectory` view: deterministic runs over generations with dashed equilibrium marks and an automatic y-axis for small frequencies.
+- Study mode `table` view: rows of computed values with flagged cells (red ink and a ✗), short labels for phones and a height that follows the row count.
 
 ### Changed
 

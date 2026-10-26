@@ -7,9 +7,10 @@ import { lib } from "./lib.mjs";
 import { curves } from "./views/curves.mjs";
 import { popgrid } from "./views/popgrid.mjs";
 import { replicates } from "./views/replicates.mjs";
+import { table, tableHeight } from "./views/table.mjs";
 import { trajectory } from "./views/trajectory.mjs";
 
-export const VIEWS = ["curves", "replicates", "popgrid", "trajectory"];
+export const VIEWS = ["curves", "replicates", "popgrid", "trajectory", "table"];
 const REQUIRED = ["chunk", "fig", "title", "view", "params", "model", "readout", "states", "sources", "simplified"];
 
 // Turn a function back into a value from its source alone, so anything it closes over is lost.
@@ -76,11 +77,12 @@ export function probeModel(spec) {
   return errors;
 }
 
-const VIEW_MODULES = { curves, replicates, popgrid, trajectory };
+const VIEW_MODULES = { curves, replicates, popgrid, trajectory, table };
 // Two layouts per page: wide (the static SVG) and narrow, which the runtime swaps in on phones so text stays legible.
+// A height may be a function of the spec (a table grows with its rows).
 const LAYOUT = {
-  wide: { width: 760, height: { curves: 320, replicates: 300, popgrid: 260, trajectory: 300 } },
-  narrow: { width: 360, height: { curves: 280, replicates: 480, popgrid: 240, trajectory: 280 } },
+  wide: { width: 760, height: { curves: 320, replicates: 300, popgrid: 260, trajectory: 300, table: tableHeight } },
+  narrow: { width: 360, height: { curves: 280, replicates: 480, popgrid: 240, trajectory: 280, table: tableHeight } },
 };
 const RUNTIME = readFileSync(new URL("./runtime.js", import.meta.url), "utf8");
 const TOP = 40;
@@ -90,8 +92,9 @@ function layout(spec, kind = "wide") {
   const { width, height } = LAYOUT[kind];
   let y = TOP;
   const boxes = [spec.view].flat().map((name) => {
-    const box = { name, box: { x: 20, y, w: width - 40, h: height[name] } };
-    y += height[name];
+    const h = typeof height[name] === "function" ? height[name](spec) : height[name];
+    const box = { name, box: { x: 20, y, w: width - 40, h } };
+    y += h;
     return box;
   });
   const frames = boxes.map(({ name, box }) => VIEW_MODULES[name].frame(spec, box)).join("");
@@ -122,6 +125,9 @@ const STUDY_CSS = `
 .study-marker{stroke:var(--anatomy-mid);stroke-width:1;stroke-dasharray:3 3}
 .study-tick,.study-axis-label{fill:var(--anatomy-text);font:10.5px var(--anatomy-mono)}
 .study-label{font:11px var(--anatomy-mono);outline:none}
+.study-row{fill:var(--anatomy-text)}
+.study-cell{fill:var(--anatomy-strong);font:11px var(--anatomy-mono)}
+.study-cell.study-flag{fill:var(--study-red-ink,var(--anatomy-red));font-weight:700}
 .study-figure [data-note]:focus-visible{text-decoration:underline}
 body[data-theme="light"]{--study-red-ink:#d12f36;--study-green-ink:#1f7a50}
 .study-series{fill:none;stroke-width:2}
