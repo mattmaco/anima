@@ -1,4 +1,7 @@
-import { after, before, test } from "node:test";
+import { after, before, describe, test } from "node:test";
+import { mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import assert from "node:assert/strict";
 import { pathToFileURL } from "node:url";
 import { buildExample, hostFor, openPage, playwright } from "./page-helpers.mjs";
@@ -72,4 +75,43 @@ test("offline", { skip }, async () => {
   const { page, requests } = await openPage(browser, pathToFileURL(demo).href);
   await page.waitForTimeout(300);
   assert.ok(requests.every((url) => url.startsWith("file://")), requests.join("\n"));
+});
+
+describe("drift page", () => {
+  let driftPage;
+  before(async () => {
+    if (skip) return;
+    const { buildPage } = await import("../build.mjs");
+    const spec = (await import("./fixtures/drift.mjs")).default;
+    driftPage = join(mkdtempSync(join(tmpdir(), "study-drift-")), "drift.html");
+    writeFileSync(driftPage, buildPage(spec));
+  });
+
+  test("restart", { skip }, async () => {
+    const { page, errors } = await openPage(browser, pathToFileURL(driftPage).href);
+    await page.waitForFunction(() => window.anima?.gen > 5);
+    await page.locator("#param-N").selectOption("500");
+    assert.ok(await page.evaluate(() => window.anima.gen) < 5);
+    assert.equal(await page.locator(".study-run").count(), 20);
+    assert.deepEqual(errors, []);
+  });
+
+  test("drift no-autoplay", { skip }, async () => {
+    const { page } = await openPage(browser, hostFor(driftPage));
+    const frame = await frameOf(page);
+    await page.waitForTimeout(500);
+    assert.equal(await frame.evaluate(() => window.__raf), 0);
+  });
+
+  test("drift phone-width", { skip }, async () => {
+    const { page } = await openPage(browser, pathToFileURL(driftPage).href, { width: 390 });
+    assert.ok(await page.evaluate(() => document.scrollingElement.scrollWidth <= 390));
+  });
+
+  test("reduced motion shows the last generation", { skip }, async () => {
+    const page = await browser.newPage({ reducedMotion: "reduce" });
+    await page.goto(pathToFileURL(driftPage).href);
+    await page.waitForFunction(() => window.anima);
+    assert.equal(await page.evaluate(() => window.anima.gen), 100);
+  });
 });

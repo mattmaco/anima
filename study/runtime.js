@@ -43,20 +43,46 @@ function draw() {
   readoutEl.textContent = readout(data, params, ctx.gen);
 }
 
-function update() {
+function update(animate = true) {
   data = model({ ...params }, lib.mulberry32(SPEC.seed ?? 1), lib);
-  ctx.cache.run = null;
-  restart();
+  restart(animate);
   syncControls();
 }
 
-// Static figures draw once; stepped figures (Task 3) override restart to animate.
-let restart = () => draw();
+// Stepped figures reveal one generation every STEP_MS; static figures just draw.
+const STEP_MS = 50;
+const stepped = Boolean(SPEC.replicates);
+const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+let visible = true;
+let rafId = 0;
+let lastStep = 0;
 
-function set(target) {
+function tick(time) {
+  rafId = 0;
+  if (!playing || !visible) return;
+  if (time - lastStep >= STEP_MS) {
+    lastStep = time;
+    ctx.gen = Math.min(ctx.gen + 1, ctx.generations);
+    draw();
+  }
+  if (ctx.gen >= ctx.generations) { playing = false; return; }
+  rafId = window.requestAnimationFrame(tick);
+}
+
+function restart(animate) {
+  if (!stepped) { draw(); return; }
+  ctx.generations = data.runs[0].length - 1;
+  const run = animate && !reduced;
+  ctx.gen = run ? 0 : ctx.generations;
+  playing = false;
+  draw();
+  if (run) play();
+}
+
+function set(target, animate = true) {
   const partial = typeof target === "string" ? SPEC.states[target] : target;
   if (!partial || typeof partial !== "object" || !apply(partial)) return false;
-  update();
+  update(animate);
   return true;
 }
 
@@ -82,8 +108,19 @@ const showNote = (event) => {
 document.addEventListener("pointerover", showNote);
 document.addEventListener("focusin", showNote);
 
-function play() { playing = true; }
+function play() {
+  if (!stepped || reduced) return;
+  if (ctx.gen >= ctx.generations) { ctx.gen = 0; draw(); }
+  playing = true;
+  if (!rafId) rafId = window.requestAnimationFrame(tick);
+}
 function pause() { playing = false; }
+if (stepped && "IntersectionObserver" in window) {
+  new IntersectionObserver(([entry]) => {
+    visible = entry.isIntersecting;
+    if (visible && playing && !rafId) rafId = window.requestAnimationFrame(tick);
+  }).observe(svg);
+}
 document.addEventListener("keydown", (event) => {
   if (event.code !== "Space" || /INPUT|SELECT|BUTTON|TEXTAREA/.test(document.activeElement?.tagName ?? "")) return;
   event.preventDefault();
@@ -91,6 +128,6 @@ document.addEventListener("keydown", (event) => {
 });
 
 const fromHash = location.hash.match(/^#state=(.*)$/);
-if (!(fromHash && set(decodeURIComponent(fromHash[1])))) update();
-window.anima = { set, params, play, pause };
+if (!(fromHash && set(decodeURIComponent(fromHash[1]), !embedded))) update(!embedded);
+window.anima = { set, params, play, pause, get gen() { return ctx.gen; } };
 if (embedded) window.parent.postMessage({ type: "anima:ready", chunk: SPEC.chunk, states: Object.keys(SPEC.states) }, "*");

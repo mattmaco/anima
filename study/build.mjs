@@ -4,6 +4,8 @@ import { pathToFileURL } from "node:url";
 import { figureSvg, pageHtml, plateHtml } from "../kit/iso-kit.mjs";
 import { lib } from "./lib.mjs";
 import { curves } from "./views/curves.mjs";
+import { popgrid } from "./views/popgrid.mjs";
+import { replicates } from "./views/replicates.mjs";
 
 export const VIEWS = ["curves", "replicates", "popgrid"];
 const REQUIRED = ["chunk", "fig", "title", "view", "params", "model", "readout", "states", "sources", "simplified"];
@@ -68,7 +70,7 @@ export function probeModel(spec) {
   return errors;
 }
 
-const VIEW_MODULES = { curves };
+const VIEW_MODULES = { curves, replicates, popgrid };
 const VIEW_HEIGHT = { curves: 320, replicates: 300, popgrid: 300 };
 const RUNTIME = readFileSync(new URL("./runtime.js", import.meta.url), "utf8");
 const WIDTH = 760;
@@ -129,6 +131,16 @@ const STUDY_CSS = `
 .study-meta h2{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--anatomy-muted);margin:18px 0 4px}
 .study-meta ul{margin:0;padding-left:18px}
 .study-edu{color:var(--anatomy-muted);font-size:12px}
+.study-run{fill:none;stroke:var(--anatomy-mid);stroke-width:1;opacity:.75}
+.study-mean{fill:none;stroke:var(--anatomy-strong);stroke-width:2}
+.study-expected{fill:none;stroke:var(--anatomy-blue);stroke-width:1.5;stroke-dasharray:5 4}
+.study-key{fill:var(--anatomy-text);font:11px var(--anatomy-mono);outline:none}
+.study-key.study-s0{fill:var(--anatomy-blue)}
+.study-axis-label[tabindex]{outline:none}
+.study-swatch.study-s0{fill:var(--anatomy-blue)}.study-swatch.study-s1{fill:var(--anatomy-strong)}.study-swatch.study-s2{fill:var(--anatomy-red)}
+.study-ind polygon{stroke:var(--anatomy-card);stroke-width:.4}
+.study-ind .l{opacity:.78}.study-ind .r{opacity:.6}
+.study-ind.g2 polygon{fill:var(--anatomy-blue)}.study-ind.g1 polygon{fill:var(--anatomy-strong)}.study-ind.g0 polygon{fill:var(--anatomy-red)}
 @media (max-width:560px){.iso-plate-corner[data-corner="hint"]{display:none}}
 `;
 
