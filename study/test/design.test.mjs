@@ -110,3 +110,30 @@ for (const [name, url] of [["Hardy-Weinberg", () => demo], ["drift", () => drift
     assert.ok(await page.evaluate(() => document.scrollingElement.scrollWidth <= 390));
   });
 }
+
+// Series labels are small text, so each series colour needs 4.5:1 against the card in both themes.
+for (const theme of ["dark", "light"]) {
+  test(`series labels reach 4.5:1 on the ${theme} card`, { skip }, async () => {
+    const { buildPage } = await import("../build.mjs");
+    const base = (await import("./fixtures/trajectory.mjs")).default;
+    const keys = ["s0", "s1", "s2", "s3"];
+    const spec = { ...base, trajectory: { ...base.trajectory, series: keys.map((key) => ({ key, label: key })) },
+      model: ({ generations }) => ({ s0: [0, 0.2], s1: [0, 0.4], s2: [0, 0.6], s3: [0, 0.8], target: 1, fast: [0], generations }),
+      readout: () => "fixture" };
+    const file = join(mkdtempSync(join(tmpdir(), "study-contrast-")), "page.html");
+    writeFileSync(file, buildPage(spec, { theme }));
+    const { page } = await openPage(browser, pathToFileURL(file).href);
+    const ratios = await page.evaluate(() => {
+      const rgb = (c) => c.match(/[\d.]+/g).slice(0, 3).map(Number);
+      const lum = (c) => { const [r, g, b] = rgb(c).map((v) => (v /= 255) <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+      let el = document.querySelector(".study-figure"), bg = "";
+      while (el && /rgba\(0, 0, 0, 0\)|transparent/.test((bg = getComputedStyle(el).backgroundColor))) el = el.parentElement;
+      const card = lum(bg);
+      return [...document.querySelectorAll(".study-trajectory .study-label")].map((t) => {
+        const a = lum(getComputedStyle(t).fill);
+        return [t.textContent, +((Math.max(a, card) + 0.05) / (Math.min(a, card) + 0.05)).toFixed(2)];
+      });
+    });
+    for (const [label, ratio] of ratios) assert.ok(ratio >= 4.5, `${label} is ${ratio}:1`);
+  });
+}
