@@ -28,6 +28,9 @@ jobs:
       - name: Kit smoke test
         run: node kit/smoke.mjs
 
+      - name: Study mode tests
+        run: node --test "study/test/*.test.mjs"
+
       - name: Build every example (dark and light)
         run: |
           for dir in examples/*/; do

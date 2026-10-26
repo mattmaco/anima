@@ -1,0 +1,310 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Hardy-Weinberg genotypes | Anima study</title><style>
+.iso{
+  --anatomy-page:#0b0b0b;--anatomy-card:#131313;--anatomy-text:#a3a3a3;--anatomy-strong:#e6e6e6;--anatomy-muted:#6e6e6e;
+  --anatomy-paper:#131313;--anatomy-face:#1b1b1b;--anatomy-top:#1c1c1c;
+  --anatomy-shade-0:#0f0f0f;--anatomy-shade-1:#121212;--anatomy-shade-2:#151515;--anatomy-shade-3:#181818;
+  --anatomy-lit-top:#262626;--anatomy-lit-shade:#1d1d1d;
+  --anatomy-hi:#d4d4d4;--anatomy-mid:#6a6a6a;--anatomy-lo:#3e3e3e;--anatomy-faint:#2a2a2a;--anatomy-lit:#ffffff;
+  --anatomy-halo:#050505;--anatomy-halo-opacity:.9;--anatomy-dot:#e6e6e6;
+  --anatomy-red:#ff6b6b;--anatomy-green:#6be0a0;--anatomy-blue:#6b9bff;
+  --anatomy-weight:.6px;--anatomy-ease:cubic-bezier(.32,.72,0,1);
+  --anatomy-mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --anatomy-lift:inset 0 1px 0 0 #ffffff0a,inset 0 0 0 1px #ffffff06,0 0 0 1px #00000026,0 1px 1px -.5px #00000014,0 3px 3px -1.5px #00000014,0 6px 6px -3px #00000014,0 12px 12px -6px #00000014;
+}
+.iso[data-theme="light"]{
+  --anatomy-page:#f2f2ef;--anatomy-card:#fbfbfa;--anatomy-text:#57575a;--anatomy-strong:#18181a;--anatomy-muted:#8c8c90;
+  --anatomy-paper:#fbfbfa;--anatomy-face:#ffffff;--anatomy-top:#ffffff;
+  --anatomy-shade-0:#dcdcd9;--anatomy-shade-1:#e5e5e2;--anatomy-shade-2:#ededea;--anatomy-shade-3:#f4f4f1;
+  --anatomy-lit-top:#ffffff;--anatomy-lit-shade:#eeeeeb;
+  --anatomy-hi:#26262a;--anatomy-mid:#8a8a8f;--anatomy-lo:#b4b4b8;--anatomy-faint:#d4d4d6;--anatomy-lit:#000000;
+  --anatomy-halo:#8a8a80;--anatomy-halo-opacity:.32;--anatomy-dot:#3a3a3e;
+  --anatomy-red:#e5484d;--anatomy-green:#30a46c;--anatomy-blue:#3e63dd;
+  --anatomy-lift:inset 0 1px 0 0 #ffffff,0 0 0 1px #0000000f,0 1px 1px -.5px #0000000a,0 3px 3px -1.5px #0000000a,0 6px 6px -3px #0000000a,0 12px 12px -6px #0000000a;
+}
+.iso-svg{display:block;width:100%;height:auto;overflow:visible}
+.iso-svg path,.iso-svg circle{vector-effect:non-scaling-stroke}
+.iso-fill{fill:var(--anatomy-paper);stroke:none}
+.iso-solid[data-lit]>.iso-fill{fill:var(--anatomy-face)}
+.iso-shade,.iso-top{stroke:none}
+.iso-shade[data-shade="0"]{fill:var(--anatomy-shade-0)}
+.iso-shade[data-shade="1"]{fill:var(--anatomy-shade-1)}
+.iso-shade[data-shade="2"]{fill:var(--anatomy-shade-2)}
+.iso-shade[data-shade="3"]{fill:var(--anatomy-shade-3)}
+.iso-top{fill:var(--anatomy-top)}
+.iso-solid[data-lit]>.iso-top{fill:var(--anatomy-lit-top)}
+.iso-solid[data-lit]>.iso-shade{fill:var(--anatomy-lit-shade)}
+.iso-solid[data-seamless]>.iso-shade,.iso-solid[data-seamless]>.iso-top{stroke-width:.4;stroke-linejoin:round}
+.iso-solid[data-seamless]>.iso-shade[data-shade="0"]{stroke:var(--anatomy-shade-0)}
+.iso-solid[data-seamless]>.iso-shade[data-shade="1"]{stroke:var(--anatomy-shade-1)}
+.iso-solid[data-seamless]>.iso-shade[data-shade="2"]{stroke:var(--anatomy-shade-2)}
+.iso-solid[data-seamless]>.iso-shade[data-shade="3"]{stroke:var(--anatomy-shade-3)}
+.iso-solid[data-seamless]>.iso-top{stroke:var(--anatomy-top)}
+.iso-solid[data-seamless][data-lit]>.iso-top{stroke:var(--anatomy-lit-top)}
+.iso-solid[data-seamless][data-lit]>.iso-shade{stroke:var(--anatomy-lit-shade)}
+.iso-solid[data-lit]>.iso-edge{stroke:var(--anatomy-lit)}
+.iso-halo{fill:var(--anatomy-halo);stroke:none;filter:blur(9px);opacity:var(--anatomy-halo-opacity);transform:translateY(3px)}
+.iso-line{fill:none;stroke:var(--anatomy-lo);stroke-width:var(--anatomy-weight);stroke-linecap:round;stroke-linejoin:round}
+.iso-line[data-tone="hi"]{stroke:var(--anatomy-hi)}
+.iso-line[data-tone="mid"]{stroke:var(--anatomy-mid)}
+.iso-line[data-tone="lo"]{stroke:var(--anatomy-lo)}
+.iso-line[data-tone="faint"]{stroke:var(--anatomy-faint)}
+.iso-line[data-tone="lit"]{stroke:var(--anatomy-lit)}
+.iso-line[data-tone="red"]{stroke:var(--anatomy-red)}
+.iso-line[data-tone="green"]{stroke:var(--anatomy-green)}
+.iso-line[data-tone="blue"]{stroke:var(--anatomy-blue)}
+.iso-line[data-dotted]{stroke-dasharray:.01 3.5;stroke-width:1}
+.iso-line[data-dashed]{stroke-dasharray:3 3}
+.iso-line[data-flow]{stroke-dasharray:2 6}
+.iso-wire-end{fill:var(--anatomy-paper);stroke:var(--anatomy-lo);stroke-width:var(--anatomy-weight)}
+.iso-wire[data-tone="hi"] .iso-wire-end{stroke:var(--anatomy-hi)}
+.iso-wire[data-tone="mid"] .iso-wire-end{stroke:var(--anatomy-mid)}
+.iso-wire[data-tone="faint"] .iso-wire-end{stroke:var(--anatomy-faint)}
+.iso-wire[data-tone="lit"] .iso-wire-end{stroke:var(--anatomy-lit)}
+.iso-dots circle{fill:var(--anatomy-dot);stroke:none;opacity:.32}
+.iso-dots[data-tone="hi"] circle{opacity:.85}
+.iso-dots[data-tone="mid"] circle{opacity:.45}
+.iso-dots[data-tone="lo"] circle{opacity:.22}
+.iso-dots[data-tone="faint"] circle{opacity:.12}
+.iso-face-text{fill:var(--anatomy-mid);font-family:var(--anatomy-mono);letter-spacing:.04em}
+.iso-face-text[data-tone="hi"]{fill:var(--anatomy-hi)}
+.iso-face-text[data-tone="lo"]{fill:var(--anatomy-lo)}
+.iso-face-text[data-tone="faint"]{fill:var(--anatomy-faint)}
+.tb-body{fill:var(--anatomy-shade-2);stroke:none}
+.tb-shine{fill:var(--anatomy-top);stroke:none}
+.tb-shade{fill:var(--anatomy-shade-0);stroke:none}
+.tb-ring{fill:none;stroke:var(--anatomy-lo);stroke-width:.45;stroke-linecap:butt;stroke-linejoin:round}
+.tb-ring[data-tone="mid"]{stroke:var(--anatomy-mid)}
+.tb-ring[data-tone="faint"]{stroke:var(--anatomy-faint)}
+.tb-ring[data-tone="hi"]{stroke:var(--anatomy-hi)}
+@keyframes iso-flow{to{stroke-dashoffset:-32}}
+@keyframes iso-pulse{0%,100%{opacity:.18}12%{opacity:1}40%{opacity:.18}}
+.iso-line[data-flow]{animation:iso-flow 1600ms linear infinite}
+.iso-dots circle[data-pulse]{animation:iso-pulse 1600ms steps(1,end) infinite;animation-delay:var(--pulse-at,0ms)}
+.iso-figure{margin:32px 0 36px}
+.iso-plate{position:relative;padding:52px 24px;border-radius:0;background:var(--anatomy-card);box-shadow:0 0 0 1px var(--anatomy-mid);--anatomy-paper:var(--anatomy-card)}
+.iso-plate-corners{position:absolute;inset:18px 20px;pointer-events:none}
+.iso-plate-corner{position:absolute;color:var(--anatomy-muted);font-family:var(--anatomy-mono);font-size:10.5px;line-height:1;letter-spacing:.04em;white-space:nowrap}
+.iso-plate-corner[data-corner="fig"]{top:0;left:0;color:var(--anatomy-text)}
+.iso-plate-corner[data-corner="title"]{top:0;right:0;text-transform:uppercase;letter-spacing:.1em}
+.iso-plate-corner[data-corner="hint"]{bottom:0;left:0;text-transform:uppercase;letter-spacing:.1em}
+.iso-plate-corner[data-corner="readout"]{right:0;bottom:0;color:var(--anatomy-text);font-variant-numeric:tabular-nums}
+.iso-plate .iso-svg{margin:0 auto}
+.iso-legend{display:grid;gap:8px;margin-top:12px;color:var(--anatomy-muted);font-size:13px;line-height:1.55}
+.iso-keys{display:flex;flex-wrap:wrap;gap:6px 18px}
+.iso-key{display:inline-flex;align-items:center;gap:7px}
+.iso-swatch{width:16px;height:10px;flex:none;overflow:visible}
+.iso-swatch path{fill:none;stroke:var(--anatomy-hi);stroke-width:1;vector-effect:non-scaling-stroke;stroke-linejoin:round;stroke-linecap:round}
+.iso-swatch[data-mark="raised"] path,.iso-swatch[data-mark="flat"] path{stroke:var(--anatomy-mid)}
+.iso-swatch[data-mark="lit"] path{stroke:var(--anatomy-lit)}
+.iso-swatch[data-mark="dim"] path{stroke:var(--anatomy-lo)}
+.iso-swatch[data-mark="dotted"] path{stroke-dasharray:.01 3;stroke-width:1.4}
+.iso-swatch[data-mark="dashed"] path{stroke-dasharray:3 2.5}
+.iso-swatch[data-mark="red"] path{stroke:var(--anatomy-red)}
+.iso-swatch[data-mark="green"] path{stroke:var(--anatomy-green)}
+.iso-swatch[data-mark="blue"] path{stroke:var(--anatomy-blue)}
+.iso-swatch-crease{stroke:var(--anatomy-lo)!important}
+@media (max-width:560px){.iso-plate{padding:48px 12px 70px}.iso-plate-corner[data-corner="hint"]{bottom:18px}}
+@media (prefers-reduced-motion:reduce){.iso-line[data-flow],.iso-dots circle[data-pulse]{animation:none}}
+
+*{box-sizing:border-box}
+html{color-scheme:dark}
+body[data-theme="light"]{color-scheme:light}
+body{margin:0;background:var(--anatomy-page);color:var(--anatomy-text);font:14px/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+.iso-page{width:min(800px,100% - 32px);margin:64px auto 96px}
+</style></head><body class="iso" data-theme="light"><main class="iso-page"><style>
+.study-figure{display:block;width:100%;height:auto}
+.study-axis{stroke:var(--anatomy-lo);stroke-width:1}
+.study-grid{stroke:var(--anatomy-faint);stroke-width:1}
+.study-marker{stroke:var(--anatomy-mid);stroke-width:1;stroke-dasharray:3 3}
+.study-tick,.study-axis-label{fill:var(--anatomy-muted);font:10.5px var(--anatomy-mono)}
+.study-label{font:11px var(--anatomy-mono);outline:none}
+.study-label:focus-visible{text-decoration:underline}
+.study-series{fill:none;stroke-width:2}
+.study-dot{stroke:var(--anatomy-card);stroke-width:1.5}
+.study-s0{stroke:var(--anatomy-blue)}.study-label.study-s0,.study-dot.study-s0{fill:var(--anatomy-blue)}
+.study-s1{stroke:var(--anatomy-strong)}.study-label.study-s1,.study-dot.study-s1{fill:var(--anatomy-strong)}
+.study-s2{stroke:var(--anatomy-red)}.study-label.study-s2,.study-dot.study-s2{fill:var(--anatomy-red)}
+.study-s3{stroke:var(--anatomy-green)}.study-label.study-s3,.study-dot.study-s3{fill:var(--anatomy-green)}
+.study-controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px 20px;margin:20px 0 8px}
+.study-controls label{display:grid;gap:4px;font:12px var(--anatomy-mono);color:var(--anatomy-text)}
+.study-controls label[hidden]{display:none}
+.study-controls output{color:var(--anatomy-strong)}
+.study-controls input,.study-controls select{width:100%;accent-color:var(--anatomy-blue)}
+.study-states{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.study-states button{font:12px var(--anatomy-mono);color:var(--anatomy-strong);background:var(--anatomy-face);border:1px solid var(--anatomy-faint);border-radius:6px;padding:4px 10px;cursor:pointer}
+.study-note{min-height:1.6em;color:var(--anatomy-strong);margin:8px 0 20px}
+.study-meta h2{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--anatomy-muted);margin:18px 0 4px}
+.study-meta ul{margin:0;padding-left:18px}
+.study-edu{color:var(--anatomy-muted);font-size:12px}
+@media (max-width:560px){.iso-plate-corner[data-corner="hint"]{display:none}}
+</style><figure class="iso-figure"><div class="iso-plate"><div class="iso-plate-corners" aria-hidden="true"><span class="iso-plate-corner" data-corner="fig">Fig 1</span><span class="iso-plate-corner" data-corner="title">Hardy-Weinberg genotypes</span><span class="iso-plate-corner" data-corner="hint">Drag a slider · Space: pause</span><span class="iso-plate-corner" data-corner="readout" data-readout></span></div><svg xmlns="http://www.w3.org/2000/svg" class="iso-svg study-figure" viewBox="0 0 760 404" role="img" aria-label="Hardy-Weinberg genotypes. Interactive figure; use the controls below."><g class="study-curves"><line class="study-grid" x1="64" y1="320" x2="648" y2="320"/><text class="study-tick" x="56" y="323.5" text-anchor="end">0</text><line class="study-grid" x1="64" y1="253" x2="648" y2="253"/><text class="study-tick" x="56" y="256.5" text-anchor="end">0.25</text><line class="study-grid" x1="64" y1="186" x2="648" y2="186"/><text class="study-tick" x="56" y="189.5" text-anchor="end">0.5</text><line class="study-grid" x1="64" y1="119" x2="648" y2="119"/><text class="study-tick" x="56" y="122.5" text-anchor="end">0.75</text><line class="study-grid" x1="64" y1="52" x2="648" y2="52"/><text class="study-tick" x="56" y="55.5" text-anchor="end">1</text><line class="study-axis" x1="64" y1="320" x2="64" y2="324"/><text class="study-tick" x="64" y="336" text-anchor="middle">0</text><line class="study-axis" x1="210" y1="320" x2="210" y2="324"/><text class="study-tick" x="210" y="336" text-anchor="middle">0.25</text><line class="study-axis" x1="356" y1="320" x2="356" y2="324"/><text class="study-tick" x="356" y="336" text-anchor="middle">0.5</text><line class="study-axis" x1="502" y1="320" x2="502" y2="324"/><text class="study-tick" x="502" y="336" text-anchor="middle">0.75</text><line class="study-axis" x1="648" y1="320" x2="648" y2="324"/><text class="study-tick" x="648" y="336" text-anchor="middle">1</text><line class="study-axis" x1="64" y1="320" x2="648" y2="320"/><line class="study-axis" x1="64" y1="320" x2="64" y2="52"/><text class="study-axis-label" x="356" y="354" text-anchor="middle">p (frequency of A1)</text><text class="study-axis-label" transform="translate(30 186) rotate(-90)" text-anchor="middle">frequency</text><line id="curve-marker" class="study-marker" y1="52" y2="320"/><path id="curve-AA" class="study-series study-s0"/><circle id="dot-AA" class="study-dot study-s0" r="4"/><text id="label-AA" class="study-label study-s0" x="656" tabindex="0" data-note="Both alleles A1: probability p × p.">A1A1 = p²</text><path id="curve-Aa" class="study-series study-s1"/><circle id="dot-Aa" class="study-dot study-s1" r="4"/><text id="label-Aa" class="study-label study-s1" x="656" tabindex="0" data-note="Two ways to get one of each (A1 then A2, or A2 then A1), so 2pq. It peaks at 0.5 when p = q = 0.5.">A1A2 = 2pq</text><path id="curve-aa" class="study-series study-s2"/><circle id="dot-aa" class="study-dot study-s2" r="4"/><text id="label-aa" class="study-label study-s2" x="656" tabindex="0" data-note="Both alleles A2: q × q. For a recessive trait this is the only visible class, so q = √(A2A2).">A2A2 = q²</text></g></svg></div></figure><div class="study-controls" role="group" aria-label="Model controls"><label><span>start from <output for="param-mode"></output></span><select id="param-mode"><option value="allele">allele</option><option value="recessive">recessive</option></select></label><label data-when="{&quot;mode&quot;:&quot;allele&quot;}"><span>p (frequency of A1) <output for="param-p"></output></span><input id="param-p" type="range" min="0" max="1" step="0.01" value="0.5"></label><label data-when="{&quot;mode&quot;:&quot;recessive&quot;}"><span>observed A2A2 frequency <output for="param-aa"></output></span><input id="param-aa" type="range" min="0" max="0.25" step="0.001" value="0.04"></label></div><div class="study-states" role="group" aria-label="Named states"><button type="button" data-state="p=0.5">p=0.5</button><button type="button" data-state="p=0.6">p=0.6</button></div><p class="study-note" aria-live="polite">Hover or focus a label for a note.</p><section class="study-meta"><h2>Sources</h2><ul><li>Hardy-Weinberg principle as stated in introductory evolution and genetics textbooks: with random mating and no evolutionary processes, genotype frequencies are p², 2pq and q².</li></ul><h2>Simplified</h2><ul><li>One locus with two alleles; diploid, sexual, non-overlapping generations.</li><li>Random mating; no selection, mutation, migration or drift (infinite population).</li><li>The recessive estimate assumes the population is in Hardy-Weinberg equilibrium.</li></ul><p class="study-edu">Educational study figure. Check it against your course materials.</p></section></main><script type="module">const SPEC = {"chunk":2,"fig":"Fig 1","title":"Hardy-Weinberg genotypes","view":"curves","curves":{"x":"p","sweep":101,"fixed":{"mode":"allele"},"series":[{"key":"AA","label":"A1A1 = p²"},{"key":"Aa","label":"A1A2 = 2pq"},{"key":"aa","label":"A2A2 = q²"}]},"params":{"mode":{"options":["allele","recessive"],"value":"allele","label":"start from"},"p":{"min":0,"max":1,"step":0.01,"value":0.5,"label":"p (frequency of A1)","when":{"mode":"allele"}},"aa":{"min":0,"max":0.25,"step":0.001,"value":0.04,"label":"observed A2A2 frequency","when":{"mode":"recessive"}}},"states":{"p=0.5":{"mode":"allele","p":0.5},"p=0.6":{"mode":"allele","p":0.6}},"notes":{"AA":"Both alleles A1: probability p × p.","Aa":"Two ways to get one of each (A1 then A2, or A2 then A1), so 2pq. It peaks at 0.5 when p = q = 0.5.","aa":"Both alleles A2: q × q. For a recessive trait this is the only visible class, so q = √(A2A2)."},"sources":["Hardy-Weinberg principle as stated in introductory evolution and genetics textbooks: with random mating and no evolutionary processes, genotype frequencies are p², 2pq and q²."],"simplified":["One locus with two alleles; diploid, sexual, non-overlapping generations.","Random mating; no selection, mutation, migration or drift (infinite population).","The recessive estimate assumes the population is in Hardy-Weinberg equilibrium."]};
+const lib = {mulberry32: (seed) => {
+    let a = seed >>> 0;
+    return () => {
+      a = (a + 0x6d2b79f5) >>> 0;
+      let t = a;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  },
+binomial: (n, p, rng) => {
+    if (p <= 0) return 0;
+    if (p >= 1) return n;
+    if (n > 200) {
+      const u = 1 - rng(), v = rng();
+      const z = Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+      return Math.min(n, Math.max(0, Math.round(n * p + z * Math.sqrt(n * p * (1 - p)))));
+    }
+    let k = 0;
+    for (let i = 0; i < n; i++) if (rng() < p) k++;
+    return k;
+  },
+wrightFisher: ({ N, p0, generations, schedule }, rng) => {
+    const run = [p0];
+    let p = p0;
+    for (let gen = 1; gen <= generations; gen++) {
+      if (p > 0 && p < 1) {
+        const size = schedule ? schedule(gen) : N;
+        p = lib.binomial(2 * size, p, rng) / (2 * size);
+      }
+      run.push(p);
+    }
+    return run;
+  }};
+const model = ({ mode, p, aa }) => {
+    const P = mode === "recessive" ? 1 - Math.sqrt(aa) : p;
+    const q = 1 - P;
+    return { p: P, q, AA: P * P, Aa: 2 * P * q, aa: q * q };
+  };
+const readout = (m, params) =>
+    params.mode === "recessive"
+      ? `q = √${params.aa} = ${m.q.toFixed(2)} · carriers 2pq ${m.Aa.toFixed(2)}`
+      : `A1A1 ${m.AA.toFixed(2)} · A1A2 ${m.Aa.toFixed(2)} · A2A2 ${m.aa.toFixed(2)}`;
+const VIEWS = [{ name: "curves", box: {"x":20,"y":40,"w":720,"h":320}, render: (svg, data, params, box, ctx) => {
+    const c = ctx.spec.curves;
+    const pad = { l: 44, r: 92, t: 12, b: 40 };
+    const x0 = box.x + pad.l, x1 = box.x + box.w - pad.r, y0 = box.y + box.h - pad.b, y1 = box.y + pad.t;
+    const { min, max } = ctx.spec.params[c.x];
+    const sx = (v) => x0 + ((x1 - x0) * (v - min)) / (max - min);
+    const sy = (v) => y0 - (y0 - y1) * Math.min(1, Math.max(0, v));
+    const key = JSON.stringify({ ...params, ...c.fixed, [c.x]: null });
+    if (ctx.cache.curves !== key) {
+      ctx.cache.curves = key;
+      const n = c.sweep ?? 101;
+      const rows = Array.from({ length: n }, (_, i) => {
+        const x = min + ((max - min) * i) / (n - 1);
+        return [x, ctx.model({ ...params, ...c.fixed, [c.x]: x }, ctx.lib.mulberry32(1), ctx.lib)];
+      });
+      for (const s of c.series) {
+        svg.getElementById(`curve-${s.key}`).setAttribute("d", rows.map(([x, m], i) => `${i ? "L" : "M"}${sx(x).toFixed(1)},${sy(m[s.key]).toFixed(1)}`).join(""));
+        svg.getElementById(`label-${s.key}`).setAttribute("y", (sy(rows.at(-1)[1][s.key]) + 4).toFixed(1));
+      }
+    }
+    const x = data[c.x] ?? params[c.x];
+    const marker = svg.getElementById("curve-marker");
+    marker.setAttribute("x1", sx(x).toFixed(1));
+    marker.setAttribute("x2", sx(x).toFixed(1));
+    for (const s of c.series) {
+      const dot = svg.getElementById(`dot-${s.key}`);
+      dot.setAttribute("cx", sx(x).toFixed(1));
+      dot.setAttribute("cy", sy(data[s.key]).toFixed(1));
+    }
+  } }];
+// Inlined after SPEC, lib, model, readout and VIEWS. Binds controls, runs the model, talks to a host page.
+const svg = document.querySelector(".study-figure");
+const readoutEl = document.querySelector("[data-readout]");
+const noteEl = document.querySelector(".study-note");
+const embedded = window.parent !== window;
+const params = {};
+for (const [name, param] of Object.entries(SPEC.params)) params[name] = param.value;
+Object.assign(params, Object.values(SPEC.states)[0] ?? {});
+const ctx = { spec: SPEC, model, lib, cache: {}, gen: Infinity, generations: 0 };
+let data = null;
+let playing = false;
+
+function coerce(name, value) {
+  const param = SPEC.params[name];
+  if (!param) return undefined;
+  if (param.options) return param.options.find((option) => String(option) === String(value));
+  const number = Number(value);
+  return Number.isFinite(number) ? Math.min(param.max, Math.max(param.min, number)) : undefined;
+}
+
+function apply(partial) {
+  let changed = false;
+  for (const [name, value] of Object.entries(partial ?? {})) {
+    const next = coerce(name, value);
+    if (next !== undefined) { params[name] = next; changed = true; }
+  }
+  return changed;
+}
+
+function syncControls() {
+  for (const [name, param] of Object.entries(SPEC.params)) {
+    const input = document.getElementById(`param-${name}`);
+    if (input && document.activeElement !== input) input.value = String(params[name]);
+    const output = document.querySelector(`output[for="param-${name}"]`);
+    if (output) output.textContent = param.options ? "" : String(+Number(params[name]).toFixed(3));
+    const label = input?.closest("label");
+    if (label && param.when) label.hidden = !Object.entries(param.when).every(([k, v]) => params[k] === v);
+  }
+}
+
+function draw() {
+  for (const view of VIEWS) view.render(svg, data, params, view.box, ctx);
+  readoutEl.textContent = readout(data, params, ctx.gen);
+}
+
+function update() {
+  data = model({ ...params }, lib.mulberry32(SPEC.seed ?? 1), lib);
+  ctx.cache.run = null;
+  restart();
+  syncControls();
+}
+
+// Static figures draw once; stepped figures (Task 3) override restart to animate.
+let restart = () => draw();
+
+function set(target) {
+  const partial = typeof target === "string" ? SPEC.states[target] : target;
+  if (!partial || typeof partial !== "object" || !apply(partial)) return false;
+  update();
+  return true;
+}
+
+function changed() {
+  if (embedded) window.parent.postMessage({ type: "anima:changed", params: { ...params } }, "*");
+}
+
+for (const name of Object.keys(SPEC.params)) {
+  const input = document.getElementById(`param-${name}`);
+  input?.addEventListener("input", () => { if (apply({ [name]: input.value })) { update(); changed(); } });
+}
+for (const button of document.querySelectorAll("[data-state]")) {
+  button.addEventListener("click", () => { if (set(button.dataset.state)) changed(); });
+}
+window.addEventListener("message", (event) => {
+  const msg = event.data;
+  if (msg && msg.type === "anima:set") set(msg.state ?? msg.params);
+});
+const showNote = (event) => {
+  const part = event.target.closest?.("[data-note]");
+  if (part && noteEl) noteEl.textContent = part.dataset.note;
+};
+document.addEventListener("pointerover", showNote);
+document.addEventListener("focusin", showNote);
+
+function play() { playing = true; }
+function pause() { playing = false; }
+document.addEventListener("keydown", (event) => {
+  if (event.code !== "Space" || /INPUT|SELECT|BUTTON|TEXTAREA/.test(document.activeElement?.tagName ?? "")) return;
+  event.preventDefault();
+  playing ? pause() : play();
+});
+
+const fromHash = location.hash.match(/^#state=(.*)$/);
+if (!(fromHash && set(decodeURIComponent(fromHash[1])))) update();
+window.anima = { set, params, play, pause };
+if (embedded) window.parent.postMessage({ type: "anima:ready", chunk: SPEC.chunk, states: Object.keys(SPEC.states) }, "*");
+</script></body></html>

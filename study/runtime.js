@@ -1,0 +1,96 @@
+// Inlined after SPEC, lib, model, readout and VIEWS. Binds controls, runs the model, talks to a host page.
+const svg = document.querySelector(".study-figure");
+const readoutEl = document.querySelector("[data-readout]");
+const noteEl = document.querySelector(".study-note");
+const embedded = window.parent !== window;
+const params = {};
+for (const [name, param] of Object.entries(SPEC.params)) params[name] = param.value;
+Object.assign(params, Object.values(SPEC.states)[0] ?? {});
+const ctx = { spec: SPEC, model, lib, cache: {}, gen: Infinity, generations: 0 };
+let data = null;
+let playing = false;
+
+function coerce(name, value) {
+  const param = SPEC.params[name];
+  if (!param) return undefined;
+  if (param.options) return param.options.find((option) => String(option) === String(value));
+  const number = Number(value);
+  return Number.isFinite(number) ? Math.min(param.max, Math.max(param.min, number)) : undefined;
+}
+
+function apply(partial) {
+  let changed = false;
+  for (const [name, value] of Object.entries(partial ?? {})) {
+    const next = coerce(name, value);
+    if (next !== undefined) { params[name] = next; changed = true; }
+  }
+  return changed;
+}
+
+function syncControls() {
+  for (const [name, param] of Object.entries(SPEC.params)) {
+    const input = document.getElementById(`param-${name}`);
+    if (input && document.activeElement !== input) input.value = String(params[name]);
+    const output = document.querySelector(`output[for="param-${name}"]`);
+    if (output) output.textContent = param.options ? "" : String(+Number(params[name]).toFixed(3));
+    const label = input?.closest("label");
+    if (label && param.when) label.hidden = !Object.entries(param.when).every(([k, v]) => params[k] === v);
+  }
+}
+
+function draw() {
+  for (const view of VIEWS) view.render(svg, data, params, view.box, ctx);
+  readoutEl.textContent = readout(data, params, ctx.gen);
+}
+
+function update() {
+  data = model({ ...params }, lib.mulberry32(SPEC.seed ?? 1), lib);
+  ctx.cache.run = null;
+  restart();
+  syncControls();
+}
+
+// Static figures draw once; stepped figures (Task 3) override restart to animate.
+let restart = () => draw();
+
+function set(target) {
+  const partial = typeof target === "string" ? SPEC.states[target] : target;
+  if (!partial || typeof partial !== "object" || !apply(partial)) return false;
+  update();
+  return true;
+}
+
+function changed() {
+  if (embedded) window.parent.postMessage({ type: "anima:changed", params: { ...params } }, "*");
+}
+
+for (const name of Object.keys(SPEC.params)) {
+  const input = document.getElementById(`param-${name}`);
+  input?.addEventListener("input", () => { if (apply({ [name]: input.value })) { update(); changed(); } });
+}
+for (const button of document.querySelectorAll("[data-state]")) {
+  button.addEventListener("click", () => { if (set(button.dataset.state)) changed(); });
+}
+window.addEventListener("message", (event) => {
+  const msg = event.data;
+  if (msg && msg.type === "anima:set") set(msg.state ?? msg.params);
+});
+const showNote = (event) => {
+  const part = event.target.closest?.("[data-note]");
+  if (part && noteEl) noteEl.textContent = part.dataset.note;
+};
+document.addEventListener("pointerover", showNote);
+document.addEventListener("focusin", showNote);
+
+function play() { playing = true; }
+function pause() { playing = false; }
+document.addEventListener("keydown", (event) => {
+  if (event.code !== "Space" || /INPUT|SELECT|BUTTON|TEXTAREA/.test(document.activeElement?.tagName ?? "")) return;
+  event.preventDefault();
+  playing ? pause() : play();
+});
+
+const fromHash = location.hash.match(/^#state=(.*)$/);
+if (!(fromHash && set(decodeURIComponent(fromHash[1])))) update();
+window.anima = { set, params, play, pause };
+if (embedded) window.parent.postMessage({ type: "anima:ready", chunk: SPEC.chunk, states: Object.keys(SPEC.states) }, "*");

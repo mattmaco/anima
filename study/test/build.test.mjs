@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { copyFileSync, existsSync, mkdtempSync } from "node:fs";
+import { copyFileSync, existsSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { buildAll, probeModel, validateSpec } from "../build.mjs";
@@ -37,4 +37,12 @@ test("buildAll writes pages and manifest", async () => {
   assert.deepEqual(Object.keys(manifest[0]), ["chunk", "file", "fileLight", "title", "states"]);
   assert.ok(existsSync(join(out, "ok.html")) && existsSync(join(out, "ok-light.html")));
   assert.ok(existsSync(join(out, "manifest.json")));
+});
+
+test("manifest carries the optional quiz link", async () => {
+  const specDir = mkdtempSync(join(tmpdir(), "study-specs-"));
+  const out = mkdtempSync(join(tmpdir(), "study-out-"));
+  writeFileSync(join(specDir, "q.mjs"), `import ok from ${JSON.stringify(join(FIXTURES, "ok.mjs"))}; export default { ...ok, quiz: { course: "evolution", chunks: [17, 18] } };`);
+  const { manifest } = await buildAll(specDir, out);
+  assert.deepEqual(manifest[0].quiz, { course: "evolution", chunks: [17, 18] });
 });
