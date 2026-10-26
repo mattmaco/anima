@@ -24,7 +24,7 @@ Keep course-derived specs in `study/local/` (git-ignored); course material shoul
 |---|---|---|
 | `chunk` | number | Chunk number in the source notes; the key a reader app joins on |
 | `fig`, `title` | string | Card label and title |
-| `view` | string or string[] | `curves`, `replicates`, `popgrid`; an array stacks views vertically |
+| `view` | string or string[] | `curves`, `replicates`, `popgrid`, `trajectory`; an array stacks views vertically |
 | `params` | `{ name: { min, max, step, value, label, when? } }` or `{ name: { options, value, label, when? } }` | Sliders and selects. `when: { other: value }` hides the control unless params match |
 | `model` | `(params, rng, lib) → data` | Pure; drives both the drawing and the readout |
 | `readout` | `(data, params, gen) → string` | Bottom-right text; `gen` is the revealed generation for stepped views (undefined otherwise) |
@@ -51,6 +51,9 @@ Functions are copied into the page with `toString()`, so `model` and `readout` m
 
 **`popgrid`**: one population's individuals as an isometric grid, coloured by genotype, for the revealed generation.
 The model returns `current: number[][]` (per generation, per individual: 2 = A1A1, 1 = A1A2, 0 = A2A2).
+
+**`trajectory`**: one deterministic run per series over generations, with dashed horizontal marks such as an equilibrium.
+`trajectory: { series: [{ key, label }], marks: [{ key, label }], y: "auto" | max, ylabel }`. The model returns an array per series key (one value per generation) and a number per mark key. `y: "auto"` fits the axis to the data and marks (for tiny frequencies such as q* = µ/s); a number fixes the top. Labels sit at the right end, pushed apart. It is static: no stepping and no Space key.
 
 A view module exports `{ name, frame(spec, box) → svg, render(svg, data, params, box, ctx) }`. `frame` runs at build time; `render` is copied into the page and must be self-contained. `ctx` holds `{ spec, model, lib, cache, gen, generations }`.
 
