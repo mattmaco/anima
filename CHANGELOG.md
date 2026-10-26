@@ -9,6 +9,10 @@ All notable changes to this project are recorded here. The format follows [Keep 
 - Study mode (`study/`): model-driven figures built from 1–2 KB specs for turning study notes into interactive figures, with `curves`, `replicates` and `popgrid` views, seeded drift simulation, named states, a `manifest.json` and a postMessage embed contract for reader apps. Includes a public `study-hardy-weinberg` example and the workflow in `references/study.md`.
 - `sunflower-bend`, a live figure of BendLab's two-state phototropism model (sensing lag, saturating bend rate), with parameter sliders, a flip-the-light option and a trajectory chart that shows when the rate limit cannot be read from the data, and three fitted presets supplied by BendLab's author. Credited to BendLab, with a link to its repository.
 
+### Changed
+
+- Study figures: a narrow layout swapped in on phones (text stays at least 9 px at 390 px), worked-example buttons above the sliders that show the active state, a wrapping readout, a popgrid key beside the grid, and AA contrast for tick and light-theme red text. `anima:set` now accepts only own params and states, sent from the embedding page; a malformed `#state=` link falls back to the first state.
+
 ## [0.1.0] - 2026-10-13
 
 ### Added

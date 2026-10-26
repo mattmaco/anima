@@ -1,9 +1,12 @@
-// Inlined after SPEC, lib, model, readout and VIEWS. Binds controls, runs the model, talks to a host page.
+// Inlined after SPEC, lib, model, readout, RENDERS and LAYOUTS. Binds controls, runs the model, talks to a host page.
 const svg = document.querySelector(".study-figure");
 const readoutEl = document.querySelector("[data-readout]");
 const noteEl = document.querySelector(".study-note");
 const liveEl = document.querySelector(".study-live");
 const embedded = window.parent !== window;
+const stateButtons = [...document.querySelectorAll("[data-state]")];
+const own = (object, key) => Object.hasOwn(object, key);
+let VIEWS = LAYOUTS.wide.boxes;
 const params = {};
 for (const [name, param] of Object.entries(SPEC.params)) params[name] = param.value;
 Object.assign(params, Object.values(SPEC.states)[0] ?? {});
@@ -12,8 +15,8 @@ let data = null;
 let playing = false;
 
 function coerce(name, value) {
+  if (!own(SPEC.params, name)) return undefined;
   const param = SPEC.params[name];
-  if (!param) return undefined;
   if (param.options) return param.options.find((option) => String(option) === String(value));
   const number = Number(value);
   return Number.isFinite(number) ? Math.min(param.max, Math.max(param.min, number)) : undefined;
@@ -37,10 +40,14 @@ function syncControls() {
     const label = input?.closest("label");
     if (label && param.when) label.hidden = !Object.entries(param.when).every(([k, v]) => params[k] === v);
   }
+  for (const button of stateButtons) {
+    const state = SPEC.states[button.dataset.state];
+    button.setAttribute("aria-pressed", String(Object.entries(state).every(([k, v]) => String(params[k]) === String(v))));
+  }
 }
 
 function draw() {
-  for (const view of VIEWS) view.render(svg, data, params, view.box, ctx);
+  for (const view of VIEWS) RENDERS[view.name](svg, data, params, view.box, ctx);
   readoutEl.textContent = readout(data, params, ctx.gen);
 }
 
@@ -87,7 +94,7 @@ function restart(animate) {
 }
 
 function set(target, animate = true) {
-  const partial = typeof target === "string" ? SPEC.states[target] : target;
+  const partial = typeof target === "string" ? (own(SPEC.states, target) ? SPEC.states[target] : null) : target;
   if (!partial || typeof partial !== "object" || !apply(partial)) return false;
   update(animate);
   return true;
@@ -101,10 +108,12 @@ for (const name of Object.keys(SPEC.params)) {
   const input = document.getElementById(`param-${name}`);
   input?.addEventListener("input", () => { if (apply({ [name]: input.value })) { update(); changed(); } });
 }
-for (const button of document.querySelectorAll("[data-state]")) {
+for (const button of stateButtons) {
   button.addEventListener("click", () => { if (set(button.dataset.state)) changed(); });
 }
+// Only the embedding page may drive the figure.
 window.addEventListener("message", (event) => {
+  if (!embedded || event.source !== window.parent) return;
   const msg = event.data;
   if (msg && msg.type === "anima:set") set(msg.state ?? msg.params);
 });
@@ -128,13 +137,36 @@ if (stepped && "IntersectionObserver" in window) {
     if (visible && playing && !rafId) rafId = window.requestAnimationFrame(tick);
   }).observe(svg);
 }
-document.addEventListener("keydown", (event) => {
+if (stepped) document.addEventListener("keydown", (event) => {
   if (event.code !== "Space" || /INPUT|SELECT|BUTTON|TEXTAREA/.test(document.activeElement?.tagName ?? "")) return;
   event.preventDefault();
   playing ? pause() : play();
 });
 
-const fromHash = location.hash.match(/^#state=(.*)$/);
-if (!(fromHash && set(decodeURIComponent(fromHash[1]), !embedded))) update(!embedded);
+// Phones get the narrow layout: same views and ids, a smaller viewBox, so SVG text stays legible.
+const narrowQuery = window.matchMedia?.("(max-width: 700px)");
+function useLayout(kind) {
+  const next = LAYOUTS[kind];
+  if (VIEWS === next.boxes) return;
+  LAYOUTS[svg.dataset.layout ?? "wide"].svg = svg.innerHTML;
+  svg.innerHTML = next.svg;
+  svg.setAttribute("viewBox", `0 0 ${next.width} ${next.height}`);
+  svg.dataset.layout = kind;
+  VIEWS = next.boxes;
+  ctx.cache = {};
+  if (data) draw();
+}
+if (narrowQuery) {
+  if (narrowQuery.matches) useLayout("narrow");
+  narrowQuery.addEventListener?.("change", (event) => useLayout(event.matches ? "narrow" : "wide"));
+}
+
+function stateFromHash() {
+  const match = location.hash.match(/^#state=(.*)$/);
+  if (!match) return null;
+  try { return decodeURIComponent(match[1]); } catch { return null; }
+}
+const fromHash = stateFromHash();
+if (!(fromHash !== null && set(fromHash, !embedded))) update(!embedded);
 window.anima = { set, params, play, pause, get gen() { return ctx.gen; } };
 if (embedded) window.parent.postMessage({ type: "anima:ready", chunk: SPEC.chunk, states: Object.keys(SPEC.states) }, "*");

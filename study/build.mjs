@@ -2,6 +2,7 @@ import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { basename, dirname, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { figureSvg, pageHtml, plateHtml } from "../kit/iso-kit.mjs";
+import { esc } from "./esc.mjs";
 import { lib } from "./lib.mjs";
 import { curves } from "./views/curves.mjs";
 import { popgrid } from "./views/popgrid.mjs";
@@ -75,22 +76,25 @@ export function probeModel(spec) {
 }
 
 const VIEW_MODULES = { curves, replicates, popgrid };
-const VIEW_HEIGHT = { curves: 320, replicates: 300, popgrid: 300 };
+// Two layouts per page: wide (the static SVG) and narrow, which the runtime swaps in on phones so text stays legible.
+const LAYOUT = {
+  wide: { width: 760, height: { curves: 320, replicates: 300, popgrid: 260 } },
+  narrow: { width: 360, height: { curves: 280, replicates: 480, popgrid: 240 } },
+};
 const RUNTIME = readFileSync(new URL("./runtime.js", import.meta.url), "utf8");
-const WIDTH = 760;
 const TOP = 40;
 const BOTTOM = 44;
 
-const esc = (text) => String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-
-function layout(spec) {
+function layout(spec, kind = "wide") {
+  const { width, height } = LAYOUT[kind];
   let y = TOP;
   const boxes = [spec.view].flat().map((name) => {
-    const box = { name, box: { x: 20, y, w: WIDTH - 40, h: VIEW_HEIGHT[name] } };
-    y += VIEW_HEIGHT[name];
+    const box = { name, box: { x: 20, y, w: width - 40, h: height[name] } };
+    y += height[name];
     return box;
   });
-  return { boxes, height: y + BOTTOM };
+  const frames = boxes.map(({ name, box }) => VIEW_MODULES[name].frame(spec, box)).join("");
+  return { boxes, width, height: y + BOTTOM, frames };
 }
 
 function controlsHtml(spec) {
@@ -101,8 +105,8 @@ function controlsHtml(spec) {
       : `<input id="param-${name}" type="range" min="${param.min}" max="${param.max}" step="${param.step}" value="${param.value}">`;
     return `<label${when}><span>${esc(param.label)} <output for="param-${name}"></output></span>${field}</label>`;
   });
-  const states = Object.keys(spec.states).map((name) => `<button type="button" data-state="${esc(name)}">${esc(name)}</button>`).join("");
-  return `<div class="study-controls" role="group" aria-label="Model controls">${inputs.join("")}</div><div class="study-states" role="group" aria-label="Named states">${states}</div><p class="study-note" aria-live="polite">Hover or focus a label for a note.</p><p class="study-live" aria-live="polite"></p>`;
+  const states = Object.keys(spec.states).map((name) => `<button type="button" data-state="${esc(name)}" aria-pressed="false">${esc(name)}</button>`).join("");
+  return `<div class="study-states" role="group" aria-labelledby="study-states-title"><span id="study-states-title" class="study-kicker">Worked examples</span>${states}</div><div class="study-controls" role="group" aria-label="Model controls">${inputs.join("")}</div><p class="study-note" aria-live="polite">Hover or focus a label for a note.</p><p class="study-live" aria-live="polite"></p>`;
 }
 
 function notesHtml(spec) {
@@ -115,22 +119,26 @@ const STUDY_CSS = `
 .study-axis{stroke:var(--anatomy-lo);stroke-width:1}
 .study-grid{stroke:var(--anatomy-faint);stroke-width:1}
 .study-marker{stroke:var(--anatomy-mid);stroke-width:1;stroke-dasharray:3 3}
-.study-tick,.study-axis-label{fill:var(--anatomy-muted);font:10.5px var(--anatomy-mono)}
+.study-tick,.study-axis-label{fill:var(--anatomy-text);font:10.5px var(--anatomy-mono)}
 .study-label{font:11px var(--anatomy-mono);outline:none}
-.study-label:focus-visible{text-decoration:underline}
+.study-figure [data-note]:focus-visible{text-decoration:underline}
+body[data-theme="light"]{--study-red-ink:#d12f36}
 .study-series{fill:none;stroke-width:2}
 .study-dot{stroke:var(--anatomy-card);stroke-width:1.5}
 .study-s0{stroke:var(--anatomy-blue)}.study-label.study-s0,.study-dot.study-s0{fill:var(--anatomy-blue)}
 .study-s1{stroke:var(--anatomy-strong)}.study-label.study-s1,.study-dot.study-s1{fill:var(--anatomy-strong)}
-.study-s2{stroke:var(--anatomy-red)}.study-label.study-s2,.study-dot.study-s2{fill:var(--anatomy-red)}
+.study-s2{stroke:var(--anatomy-red)}.study-dot.study-s2{fill:var(--anatomy-red)}.study-label.study-s2{fill:var(--study-red-ink,var(--anatomy-red))}
 .study-s3{stroke:var(--anatomy-green)}.study-label.study-s3,.study-dot.study-s3{fill:var(--anatomy-green)}
-.study-controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px 20px;margin:20px 0 8px}
+.study-controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px 20px;margin:16px 0 8px}
 .study-controls label{display:grid;gap:4px;font:12px var(--anatomy-mono);color:var(--anatomy-text)}
 .study-controls label[hidden]{display:none}
 .study-controls output{color:var(--anatomy-strong)}
 .study-controls input,.study-controls select{width:100%;accent-color:var(--anatomy-blue)}
-.study-states{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
-.study-states button{font:12px var(--anatomy-mono);color:var(--anatomy-strong);background:var(--anatomy-face);border:1px solid var(--anatomy-faint);border-radius:6px;padding:4px 10px;cursor:pointer}
+.study-states{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:16px 0 8px}
+.study-kicker{flex-basis:100%;font:11px var(--anatomy-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--anatomy-text)}
+.study-states button{font:12px var(--anatomy-mono);color:var(--anatomy-strong);background:var(--anatomy-face);border:1px solid var(--anatomy-mid);border-radius:6px;padding:6px 12px;cursor:pointer}
+.study-states button:hover{border-color:var(--anatomy-strong)}
+.study-states button[aria-pressed="true"]{background:var(--anatomy-strong);border-color:var(--anatomy-strong);color:var(--anatomy-card)}
 .study-live{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .study-note{min-height:1.6em;color:var(--anatomy-strong);margin:8px 0 20px}
 .study-meta h2{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--anatomy-muted);margin:18px 0 4px}
@@ -146,27 +154,35 @@ const STUDY_CSS = `
 .study-ind polygon{stroke:var(--anatomy-card);stroke-width:.4}
 .study-ind .l{opacity:.78}.study-ind .r{opacity:.6}
 .study-ind.g2 polygon{fill:var(--anatomy-blue)}.study-ind.g1 polygon{fill:var(--anatomy-strong)}.study-ind.g0 polygon{fill:var(--anatomy-red)}
-@media (max-width:560px){.iso-plate-corner[data-corner="hint"]{display:none}}
+.study-figure[data-layout="narrow"]{max-width:480px}
+@media (max-width:560px){.iso-plate-corner[data-corner="hint"]{display:none}.iso-plate-corner[data-corner="readout"]{left:0;white-space:normal;text-align:right;line-height:1.35}}
 `;
 
-function bootScript(spec, boxes) {
+// The wide layout is the static SVG; only the narrow one ships as a string (the runtime keeps the wide markup from the DOM).
+function bootScript(spec, wide, narrow) {
   const config = Object.fromEntries(Object.entries(spec).filter(([, value]) => typeof value !== "function"));
   const libSrc = `{${Object.entries(lib).map(([name, fn]) => `${name}: ${fn}`).join(",\n")}}`;
-  const views = boxes.map(({ name, box }) => `{ name: ${JSON.stringify(name)}, box: ${JSON.stringify(box)}, render: ${VIEW_MODULES[name].render} }`);
-  return `const SPEC = ${JSON.stringify(config)};\nconst lib = ${libSrc};\nconst model = ${fnSource(spec.model)};\nconst readout = ${fnSource(spec.readout)};\nconst VIEWS = [${views.join(",\n")}];\n${RUNTIME}`;
+  const names = [...new Set(wide.boxes.map(({ name }) => name))];
+  const renders = names.map((name) => `${JSON.stringify(name)}: ${VIEW_MODULES[name].render}`);
+  const layouts = {
+    wide: { width: wide.width, height: wide.height, boxes: wide.boxes },
+    narrow: { width: narrow.width, height: narrow.height, boxes: narrow.boxes, svg: narrow.frames },
+  };
+  return `const SPEC = ${JSON.stringify(config)};\nconst lib = ${libSrc};\nconst model = ${fnSource(spec.model)};\nconst readout = ${fnSource(spec.readout)};\nconst RENDERS = {${renders.join(",\n")}};\nconst LAYOUTS = ${JSON.stringify(layouts)};\n${RUNTIME}`;
 }
 
 export function buildPage(spec, { theme = "dark" } = {}) {
-  const { boxes, height } = layout(spec);
-  const frames = boxes.map(({ name, box }) => VIEW_MODULES[name].frame(spec, box)).join("");
-  const svg = figureSvg({ width: WIDTH, height, label: `${spec.title}. Interactive figure; use the controls below.`, body: frames, className: "study-figure" });
-  const plate = plateHtml({ fig: spec.fig, title: spec.title, hint: "Drag a slider · Space: pause", body: svg });
+  const wide = layout(spec, "wide");
+  const narrow = layout(spec, "narrow");
+  const svg = figureSvg({ width: wide.width, height: wide.height, label: `${spec.title}. Interactive figure; use the controls below.`, body: wide.frames, className: "study-figure" });
+  const hint = spec.replicates ? "Drag a slider · Space: play/pause" : "Drag a slider";
+  const plate = plateHtml({ fig: spec.fig, title: spec.title, hint, body: svg });
   return pageHtml({
     title: `${spec.title} | Anima study`,
     theme,
-    width: WIDTH + 40,
+    width: wide.width + 40,
     body: `<style>${STUDY_CSS}</style>${plate}${controlsHtml(spec)}${notesHtml(spec)}`,
-    script: bootScript(spec, boxes),
+    script: bootScript(spec, wide, narrow),
   });
 }
 

@@ -54,12 +54,14 @@ The model returns `current: number[][]` (per generation, per individual: 2 = A1A
 
 A view module exports `{ name, frame(spec, box) → svg, render(svg, data, params, box, ctx) }`. `frame` runs at build time; `render` is copied into the page and must be self-contained. `ctx` holds `{ spec, model, lib, cache, gen, generations }`.
 
+`frame` runs twice per page: for a wide box (760 wide, the static SVG) and a narrow one (360 wide). At 700 px and below, the runtime swaps in the narrow markup and viewBox, clears `ctx.cache` and redraws, so SVG text stays legible on phones. `render` must take all its geometry from `box` (for example, `replicates` stacks its panels when `box.w < 500`). Escape any spec text a view writes into markup with `study/esc.mjs`.
+
 ## Embed contract
 
 - `manifest.json`: `[{ chunk, file, fileLight, title, states, quiz? }]`.
-- Host → figure: `postMessage({ type: "anima:set", state: "<name>" })`, or `{ type: "anima:set", params: { ... } }`. Unknown states and params are ignored.
+- Host → figure: `postMessage({ type: "anima:set", state: "<name>" })`, or `{ type: "anima:set", params: { ... } }`. Unknown states and params (including inherited names such as `toString`) are ignored, and only messages from the embedding page (`window.parent`) are accepted.
 - Figure → host: `{ type: "anima:ready", chunk, states }` on load, and `{ type: "anima:changed", params }` after user input.
-- `#state=<name>` in the URL selects a state on load.
+- `#state=<name>` in the URL selects a state on load; an unknown or malformed name falls back to the first state.
 - Nothing autoplays when embedded. A stepped figure shows its final generation until the user or the host acts. Under `prefers-reduced-motion` it always shows the final generation.
 
 ```html
