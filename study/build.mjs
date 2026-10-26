@@ -28,6 +28,11 @@ export function validateSpec(spec) {
   const errors = REQUIRED.filter((key) => spec[key] === undefined).map((key) => `missing field: ${key}`);
   for (const view of [spec.view ?? []].flat()) if (!VIEWS.includes(view)) errors.push(`unknown view: ${view}`);
   for (const key of ["model", "readout"]) if (spec[key] !== undefined && typeof spec[key] !== "function") errors.push(`${key} must be a function`);
+  if (spec.chunks !== undefined) {
+    const [first, last] = Array.isArray(spec.chunks) ? spec.chunks : [];
+    const whole = spec.chunks.length === 2 && Number.isInteger(first) && Number.isInteger(last);
+    if (!whole || first > spec.chunk || last < spec.chunk) errors.push("chunks must be [first, last] with first ≤ chunk ≤ last");
+  }
   return errors;
 }
 
@@ -219,6 +224,7 @@ export async function buildAll(specDir, outDir) {
     writeFileSync(join(outDir, `${slug}.html`), buildPage(spec, { theme: "dark" }));
     writeFileSync(join(outDir, `${slug}-light.html`), buildPage(spec, { theme: "light" }));
     const entry = { chunk: spec.chunk, file: `${slug}.html`, fileLight: `${slug}-light.html`, title: spec.title, states: Object.keys(spec.states) };
+    if (spec.chunks) entry.chunks = spec.chunks;
     if (spec.quiz) entry.quiz = spec.quiz;
     return entry;
   });

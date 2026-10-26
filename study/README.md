@@ -33,6 +33,7 @@ Keep course-derived specs in `study/local/` (git-ignored); course material shoul
 | `sources` | string[] | Cites back to the notes, e.g. `"P1 11–12: p², 2pq, q²"` |
 | `simplified` | string[] | What the figure leaves out |
 | `seed` | number, optional | Seed for `rng` (default 1) |
+| `chunks` | `[first, last]`, optional | The chunks the figure covers (first ≤ `chunk` ≤ last), copied into the manifest; without it a figure covers only `chunk` |
 | `quiz` | `{ course, chunks }`, optional | Copied into the manifest, for linking to a quiz bank whose chunk numbers differ |
 
 Functions are copied into the page with `toString()`, so `model` and `readout` must be self-contained: no imports and no module-level constants. Use `lib` for shared helpers:
@@ -64,7 +65,7 @@ A view module exports `{ name, frame(spec, box) → svg, render(svg, data, param
 
 ## Embed contract
 
-- `manifest.json`: `[{ chunk, file, fileLight, title, states, quiz? }]`.
+- `manifest.json`: `[{ chunk, file, fileLight, title, states, chunks?, quiz? }]`.
 - Host → figure: `postMessage({ type: "anima:set", state: "<name>" })`, or `{ type: "anima:set", params: { ... } }`. Unknown states and params (including inherited names such as `toString`) are ignored, and only messages from the embedding page (`window.parent`) are accepted.
 - Figure → host: `{ type: "anima:ready", chunk, states }` on load, and `{ type: "anima:changed", params }` after user input.
 - `#state=<name>` in the URL selects a state on load; an unknown or malformed name falls back to the first state.

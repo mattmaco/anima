@@ -47,6 +47,20 @@ test("manifest carries the optional quiz link", async () => {
   assert.deepEqual(manifest[0].quiz, { course: "evolution", chunks: [17, 18] });
 });
 
+test("manifest carries the optional chunk range", async () => {
+  const specDir = mkdtempSync(join(tmpdir(), "study-specs-"));
+  const out = mkdtempSync(join(tmpdir(), "study-out-"));
+  writeFileSync(join(specDir, "r.mjs"), `import ok from ${JSON.stringify(join(FIXTURES, "ok.mjs"))}; export default { ...ok, chunks: [${ok.chunk}, ${ok.chunk + 1}] };`);
+  const { manifest } = await buildAll(specDir, out);
+  assert.deepEqual(manifest[0].chunks, [ok.chunk, ok.chunk + 1]);
+});
+
+test("chunk range must be [first, last] around chunk", async () => {
+  for (const chunks of [[ok.chunk + 1, ok.chunk + 2], [ok.chunk, ok.chunk - 1], [ok.chunk], "7-8"]) {
+    assert.ok((await validateSpec({ ...ok, chunks })).some((e) => e.includes("chunks")), JSON.stringify(chunks));
+  }
+});
+
 test("method-shorthand model compiles in the page", async () => {
   const { buildPage } = await import("../build.mjs");
   const shorthand = (await import("./fixtures/shorthand.mjs")).default;
