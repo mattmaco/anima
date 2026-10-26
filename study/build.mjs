@@ -11,10 +11,14 @@ export const VIEWS = ["curves", "replicates", "popgrid"];
 const REQUIRED = ["chunk", "fig", "title", "view", "params", "model", "readout", "states", "sources", "simplified"];
 
 // Turn a function back into a value from its source alone, so anything it closes over is lost.
-export function revive(fn) {
+// Source of a function as an expression; method shorthand (`model(p) {…}`) becomes a function expression.
+export function fnSource(fn) {
   const src = fn.toString();
-  const expr = /^(async\s+)?(function\b|\(|[\w$]+\s*=>)/.test(src) ? src : `function ${src}`;
-  return new Function("lib", `return (${expr});`)(lib);
+  return /^(async\s+)?(function\b|\(|[\w$]+\s*=>)/.test(src) ? src : `function ${src}`;
+}
+
+export function revive(fn) {
+  return new Function("lib", `return (${fnSource(fn)});`)(lib);
 }
 
 export function validateSpec(spec) {
@@ -98,7 +102,7 @@ function controlsHtml(spec) {
     return `<label${when}><span>${esc(param.label)} <output for="param-${name}"></output></span>${field}</label>`;
   });
   const states = Object.keys(spec.states).map((name) => `<button type="button" data-state="${esc(name)}">${esc(name)}</button>`).join("");
-  return `<div class="study-controls" role="group" aria-label="Model controls">${inputs.join("")}</div><div class="study-states" role="group" aria-label="Named states">${states}</div><p class="study-note" aria-live="polite">Hover or focus a label for a note.</p>`;
+  return `<div class="study-controls" role="group" aria-label="Model controls">${inputs.join("")}</div><div class="study-states" role="group" aria-label="Named states">${states}</div><p class="study-note" aria-live="polite">Hover or focus a label for a note.</p><p class="study-live" aria-live="polite"></p>`;
 }
 
 function notesHtml(spec) {
@@ -127,6 +131,7 @@ const STUDY_CSS = `
 .study-controls input,.study-controls select{width:100%;accent-color:var(--anatomy-blue)}
 .study-states{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
 .study-states button{font:12px var(--anatomy-mono);color:var(--anatomy-strong);background:var(--anatomy-face);border:1px solid var(--anatomy-faint);border-radius:6px;padding:4px 10px;cursor:pointer}
+.study-live{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .study-note{min-height:1.6em;color:var(--anatomy-strong);margin:8px 0 20px}
 .study-meta h2{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--anatomy-muted);margin:18px 0 4px}
 .study-meta ul{margin:0;padding-left:18px}
@@ -148,7 +153,7 @@ function bootScript(spec, boxes) {
   const config = Object.fromEntries(Object.entries(spec).filter(([, value]) => typeof value !== "function"));
   const libSrc = `{${Object.entries(lib).map(([name, fn]) => `${name}: ${fn}`).join(",\n")}}`;
   const views = boxes.map(({ name, box }) => `{ name: ${JSON.stringify(name)}, box: ${JSON.stringify(box)}, render: ${VIEW_MODULES[name].render} }`);
-  return `const SPEC = ${JSON.stringify(config)};\nconst lib = ${libSrc};\nconst model = ${spec.model};\nconst readout = ${spec.readout};\nconst VIEWS = [${views.join(",\n")}];\n${RUNTIME}`;
+  return `const SPEC = ${JSON.stringify(config)};\nconst lib = ${libSrc};\nconst model = ${fnSource(spec.model)};\nconst readout = ${fnSource(spec.readout)};\nconst VIEWS = [${views.join(",\n")}];\n${RUNTIME}`;
 }
 
 export function buildPage(spec, { theme = "dark" } = {}) {

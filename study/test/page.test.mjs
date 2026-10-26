@@ -146,3 +146,11 @@ test("no text overlaps in the drift figure", { skip }, async () => {
   await page.waitForFunction(() => window.anima);
   assert.deepEqual(await overlaps(page), []);
 });
+
+test("readout is announced to screen readers", { skip }, async () => {
+  const { page } = await openPage(browser, pathToFileURL(demo).href);
+  await page.evaluate(() => window.anima.set("p=0.6"));
+  const live = page.locator(".study-live");
+  assert.equal(await live.getAttribute("aria-live"), "polite");
+  assert.equal(await live.textContent(), await page.locator("[data-readout]").textContent());
+});

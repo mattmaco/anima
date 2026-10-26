@@ -2,6 +2,7 @@
 const svg = document.querySelector(".study-figure");
 const readoutEl = document.querySelector("[data-readout]");
 const noteEl = document.querySelector(".study-note");
+const liveEl = document.querySelector(".study-live");
 const embedded = window.parent !== window;
 const params = {};
 for (const [name, param] of Object.entries(SPEC.params)) params[name] = param.value;
@@ -43,6 +44,11 @@ function draw() {
   readoutEl.textContent = readout(data, params, ctx.gen);
 }
 
+// The readout corner is aria-hidden (kit), so the result is mirrored into a live region: once per change, not per frame.
+function announce() {
+  if (liveEl) liveEl.textContent = readoutEl.textContent;
+}
+
 function update(animate = true) {
   data = model({ ...params }, lib.mulberry32(SPEC.seed ?? 1), lib);
   restart(animate);
@@ -65,18 +71,19 @@ function tick(time) {
     ctx.gen = Math.min(ctx.gen + 1, ctx.generations);
     draw();
   }
-  if (ctx.gen >= ctx.generations) { playing = false; return; }
+  if (ctx.gen >= ctx.generations) { playing = false; announce(); return; }
   rafId = window.requestAnimationFrame(tick);
 }
 
 function restart(animate) {
-  if (!stepped) { draw(); return; }
+  if (!stepped) { draw(); announce(); return; }
   ctx.generations = data.runs[0].length - 1;
   const run = animate && !reduced;
   ctx.gen = run ? 0 : ctx.generations;
   playing = false;
   draw();
   if (run) play();
+  else announce();
 }
 
 function set(target, animate = true) {

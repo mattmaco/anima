@@ -46,3 +46,11 @@ test("manifest carries the optional quiz link", async () => {
   const { manifest } = await buildAll(specDir, out);
   assert.deepEqual(manifest[0].quiz, { course: "evolution", chunks: [17, 18] });
 });
+
+test("method-shorthand model compiles in the page", async () => {
+  const { buildPage } = await import("../build.mjs");
+  const shorthand = (await import("./fixtures/shorthand.mjs")).default;
+  const html = buildPage(shorthand);
+  const script = html.match(/<script type="module">([\s\S]*)<\/script>/)[1];
+  assert.doesNotThrow(() => new Function(script));
+});

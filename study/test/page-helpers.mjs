@@ -7,6 +7,8 @@ import { pathToFileURL } from "node:url";
 
 const require = createRequire(import.meta.url);
 export const playwright = (() => { try { return require("playwright"); } catch { return null; } })();
+// CI sets STUDY_REQUIRE_PLAYWRIGHT=1 so missing Playwright fails the run instead of skipping every page test.
+if (!playwright && process.env.STUDY_REQUIRE_PLAYWRIGHT === "1") throw new Error("Playwright is required (STUDY_REQUIRE_PLAYWRIGHT=1) but could not be loaded");
 export const ROOT = new URL("../../", import.meta.url).pathname;
 
 export function buildExample(name) {
