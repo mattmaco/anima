@@ -120,7 +120,8 @@ function controlsHtml(spec) {
 
 function notesHtml(spec) {
   const list = (items) => `<ul>${items.map((item) => `<li>${esc(item)}</li>`).join("")}</ul>`;
-  return `<section class="study-meta"><h2>Sources</h2>${list(spec.sources)}<h2>Simplified</h2>${list(spec.simplified)}<p class="study-edu">Educational study figure. Check it against your course materials.</p></section>`;
+  // Collapsed by default so the figure and its controls lead; the disclaimer stays visible.
+  return `<details class="study-meta"><summary>Sources and simplifications</summary><h2>Sources</h2>${list(spec.sources)}<h2>Simplified</h2>${list(spec.simplified)}</details><p class="study-edu">Educational study figure. Check it against your course materials.</p>`;
 }
 
 const STUDY_CSS = `
@@ -153,6 +154,10 @@ body[data-theme="light"]{--study-red-ink:#d12f36;--study-green-ink:#1f7a50}
 .study-states button[aria-pressed="true"]{background:var(--anatomy-strong);border-color:var(--anatomy-strong);color:var(--anatomy-card)}
 .study-live{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .study-note{min-height:1.6em;color:var(--anatomy-strong);margin:8px 0 20px}
+.study-meta{margin:16px 0 0;border-top:1px solid var(--anatomy-faint)}
+.study-meta summary{cursor:pointer;padding:12px 0;font:12px var(--anatomy-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--anatomy-text)}
+.study-meta summary:hover{color:var(--anatomy-strong)}
+.study-meta summary:focus-visible{outline:2px solid var(--anatomy-blue);outline-offset:2px}
 .study-meta h2{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--anatomy-muted);margin:18px 0 4px}
 .study-meta ul{margin:0;padding-left:18px}
 .study-edu{color:var(--anatomy-muted);font-size:12px}

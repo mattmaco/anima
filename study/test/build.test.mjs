@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { copyFileSync, existsSync, mkdtempSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { buildAll, probeModel, validateSpec } from "../build.mjs";
@@ -67,4 +67,19 @@ test("method-shorthand model compiles in the page", async () => {
   const html = buildPage(shorthand);
   const script = html.match(/<script type="module">([\s\S]*)<\/script>/)[1];
   assert.doesNotThrow(() => new Function(script));
+});
+
+test("sources and simplifications sit in a collapsed disclosure", async () => {
+  const specDir = mkdtempSync(join(tmpdir(), "study-specs-"));
+  const out = mkdtempSync(join(tmpdir(), "study-out-"));
+  copyFileSync(join(FIXTURES, "ok.mjs"), join(specDir, "ok.mjs"));
+  await buildAll(specDir, out);
+  const html = readFileSync(join(out, "ok.html"), "utf8");
+  const meta = html.match(/<details class="study-meta">([\s\S]*?)<\/details>/);
+  assert.ok(meta, "sources are wrapped in <details>");
+  assert.doesNotMatch(html, /<details class="study-meta" open/);
+  assert.match(meta[1], /^<summary>Sources and simplifications<\/summary>/);
+  assert.match(meta[1], /<h2>Sources<\/h2>[\s\S]*<h2>Simplified<\/h2>/);
+  // The disclaimer stays visible outside the collapsed part.
+  assert.match(html, /<\/details><p class="study-edu">/);
 });

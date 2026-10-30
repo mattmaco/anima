@@ -31,7 +31,7 @@ Keep course-derived specs in `study/local/` (git-ignored); course material shoul
 | `states` | `{ name: partialParams }` | Named states (JSON only). The first is the initial state |
 | `notes` | `{ partId: string }` | One-line notes shown on hover or focus |
 | `sources` | string[] | Cites back to the notes, e.g. `"P1 11–12: p², 2pq, q²"` |
-| `simplified` | string[] | What the figure leaves out |
+| `simplified` | string[] | What the figure leaves out (shown with `sources` under a collapsed "Sources and simplifications" disclosure) |
 | `seed` | number, optional | Seed for `rng` (default 1) |
 | `chunks` | `[first, last]`, optional | The chunks the figure covers (first ≤ `chunk` ≤ last), copied into the manifest; without it a figure covers only `chunk` |
 | `quiz` | `{ course, chunks }`, optional | Copied into the manifest, for linking to a quiz bank whose chunk numbers differ |
