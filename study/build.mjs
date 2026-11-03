@@ -103,7 +103,9 @@ const TOP = 40;
 const BOTTOM = 44;
 
 function layout(spec, kind = "wide") {
-  const { width, height } = LAYOUT[kind];
+  const { height } = LAYOUT[kind];
+  // A view may ask for a wider canvas (a cycle's host bands need room for five columns).
+  const width = Math.max(LAYOUT[kind].width, ...[spec.view].flat().map((name) => VIEW_MODULES[name].width?.[kind] ?? 0));
   let y = TOP;
   const boxes = [spec.view].flat().map((name) => {
     const h = typeof height[name] === "function" ? height[name](spec) : height[name];

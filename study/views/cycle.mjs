@@ -7,116 +7,16 @@
 // The model returns { step, dim, broken, caption, text }: dim lists stages that stop forming once the cut links break.
 import { esc } from "../esc.mjs";
 
-const NODE = { wide: [138, 40], narrow: [150, 38] };
-const SIDE_NARROW_W = 112;
-const CAPTION = { wide: 44, narrow: 90 };
-const ROW = 66; // narrow: one stage per row
-const CHAR = 6.7; // approximate advance of an 11px mono glyph
-
-function legend(spec, w) {
-  let x = 0, y = 0;
-  const items = spec.cycle.hosts.map((h, i) => {
-    const text = h.role ? `${h.label} · ${h.role}` : h.label;
-    const width = 20 + CHAR * text.length + 18;
-    if (x > 0 && x + width > w) { x = 0; y += 18; }
-    const item = { h, i, text, x, y };
-    x += width;
-    return item;
-  });
-  return { items, h: y + 18 + 10 };
-}
-
-const ringH = (spec) => (spec.cycle.stages.length > 6 ? 380 : 340);
-const narrowRows = (spec) => spec.cycle.stages.length + Math.max(0, (spec.cycle.side ?? []).length - 1) * 0.5;
-
-export const cycleHeight = {
-  wide: (spec) => legend(spec, 720).h + ringH(spec) + CAPTION.wide,
-  narrow: (spec) => legend(spec, 320).h + narrowRows(spec) * ROW + 20 + CAPTION.narrow,
-};
+// Wide: one horizontal band per host (hosts order = top to bottom), stage cards in their band, orthogonal arrows.
+// A band that holds side routes gets a second row under its main row. Phones: one column, tinted runs per host.
+const CARD = { w: 150, h: 58 };
+const BAND = { top: 26, bottom: 22, gap: 10, rowGap: 34 };
+const NCARD = { h: 52, gap: 24, strip: 22 };
+const SIDE_NARROW_W = 136;
+const CAPTION = { wide: 46, narrow: 92 };
+const CH = 6.1; // advance of a 10px mono glyph
 
 const hostIndex = (spec, key) => spec.cycle.hosts.findIndex((h) => h.key === key);
-
-// Stage and side-node centres for one layout.
-function place(spec, box, narrow) {
-  const c = spec.cycle, n = c.stages.length, side = c.side ?? [];
-  const lg = legend(spec, box.w);
-  const top = box.y + lg.h, bottom = box.y + box.h - CAPTION[narrow ? "narrow" : "wide"];
-  const [nw, nh] = NODE[narrow ? "narrow" : "wide"];
-  const pos = {};
-  if (!narrow) {
-    const cx = box.x + box.w / 2, cy = (top + bottom) / 2;
-    const rx = box.w / 2 - nw / 2 - 8, ry = (bottom - top) / 2 - nh / 2 - 10;
-    c.stages.forEach((s, i) => {
-      const a = -Math.PI / 2 + (Math.PI * (2 * i - 1)) / n;
-      pos[s.key] = { x: cx + rx * Math.cos(a), y: cy + ry * Math.sin(a), w: nw, h: nh };
-    });
-    // Side nodes sit on a row through the centre, ordered left to right by where their links point.
-    const target = (s) => { const f = pos[s.from], b = pos[s.back] ?? f; return { x: (f.x + b.x) / 2, y: (f.y + b.y) / 2 }; };
-    const order = [...side].sort((a, b) => target(a).x - target(b).x);
-    order.forEach((s, i) => {
-      const t = target(s), k = order.length;
-      const x = s.pos ? cx + s.pos[0] * rx : k === 1 ? cx + 0.3 * (t.x - cx) : cx + (i - (k - 1) / 2) * (nw + 28);
-      const y = s.pos ? cy + s.pos[1] * ry : cy + 0.2 * (t.y - cy);
-      pos[s.key] = { x, y, w: nw, h: nh };
-    });
-    return { pos, center: { x: cx, y: cy }, lg, bottom };
-  }
-  const x = side.length ? box.x + 30 + nw / 2 : box.x + box.w / 2 + 8;
-  c.stages.forEach((s, i) => { pos[s.key] = { x, y: top + 14 + nh / 2 + i * ROW, w: nw, h: nh }; });
-  const sx = box.x + box.w - SIDE_NARROW_W / 2 - 2;
-  const used = [];
-  for (const s of side) {
-    const f = pos[s.from], b = pos[s.back] ?? f;
-    let y = (f.y + b.y) / 2;
-    while (used.some((u) => Math.abs(u - y) < nh + 8)) y += nh + 10;
-    used.push(y);
-    pos[s.key] = { x: sx, y, w: SIDE_NARROW_W, h: nh };
-  }
-  return { pos, center: { x: box.x + box.w / 2, y: (top + bottom) / 2 }, lg, bottom };
-}
-
-const inside = (p, r, m = 4) => Math.abs(p.x - r.x) < r.w / 2 + m && Math.abs(p.y - r.y) < r.h / 2 + m;
-
-// A quadratic curve from rect a to rect b, trimmed to the rect edges, with an arrowhead at b.
-function curve(a, b, control) {
-  const pts = [];
-  for (let i = 0; i <= 60; i++) {
-    const t = i / 60, u = 1 - t;
-    pts.push({ x: u * u * a.x + 2 * u * t * control.x + t * t * b.x, y: u * u * a.y + 2 * u * t * control.y + t * t * b.y });
-  }
-  const mid = pts[30];
-  const kept = pts.filter((p) => !inside(p, a) && !inside(p, b));
-  return { pts: kept.length > 1 ? kept : [a, b], mid, all: pts };
-}
-
-const hits = (box, rects) => rects.some((r) => box.x0 < r.x + r.w / 2 && r.x - r.w / 2 < box.x1 && box.y0 < r.y + r.h / 2 && r.y - r.h / 2 < box.y1);
-
-// Slide a label along its curve until it clears every node; the ✗ goes on the other half of the curve.
-function spots(all, lines, rects) {
-  const w = Math.max(...lines.map((l) => l.length)) * 6.1 + 6, h = lines.length * 11 + 4;
-  const boxAt = (p) => ({ x0: p.x - w / 2, x1: p.x + w / 2, y0: p.y - h / 2, y1: p.y + h / 2 });
-  let at = 30;
-  for (const i of [30, 25, 35, 20, 40, 16, 44]) if (!hits(boxAt(all[i]), rects)) { at = i; break; }
-  const xAt = at <= 30 ? 44 : 16;
-  return { label: all[at], x: all[xAt] };
-}
-
-function edgeSvg({ key, note, pts, mid, all, rects, how, cls, labelled }) {
-  const d = pts.map((p, i) => `${i ? "L" : "M"}${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join("");
-  const end = pts[pts.length - 1], prev = pts[Math.max(0, pts.length - 4)];
-  const ang = Math.atan2(end.y - prev.y, end.x - prev.x), s = 7;
-  const head = `M${end.x.toFixed(1)} ${end.y.toFixed(1)}L${(end.x - s * Math.cos(ang - 0.45)).toFixed(1)} ${(end.y - s * Math.sin(ang - 0.45)).toFixed(1)}L${(end.x - s * Math.cos(ang + 0.45)).toFixed(1)} ${(end.y - s * Math.sin(ang + 0.45)).toFixed(1)}Z`;
-  let label = "", xm = mid;
-  if (labelled && how && all) {
-    const lines = wrap(how, 14).slice(0, 4);
-    const spot = spots(all, lines, rects);
-    const p = spot.label;
-    xm = spot.x;
-    const y0 = p.y - ((lines.length - 1) * 11) / 2 + 3.5;
-    label = `<text class="cyc-how" x="${p.x.toFixed(1)}" y="${y0.toFixed(1)}" text-anchor="middle">${lines.map((l, i) => `<tspan x="${p.x.toFixed(1)}" dy="${i ? 11 : 0}">${esc(l)}</tspan>`).join("")}</text>`;
-  }
-  return `<g class="cyc-edge ${cls}" data-edge="${esc(key)}" tabindex="0" data-note="${esc(note)}"><path class="cyc-line" d="${d}"/><path class="cyc-head" d="${head}"/>${label}<text class="cyc-x" x="${xm.x.toFixed(1)}" y="${(xm.y + 6).toFixed(1)}" text-anchor="middle">✗</text></g>`;
-}
 
 function wrap(text, max) {
   const lines = [""];
@@ -125,24 +25,300 @@ function wrap(text, max) {
     if (last && `${last} ${word}`.length > max) lines.push(word);
     else lines[lines.length - 1] = last ? `${last} ${word}` : word;
   }
-  return lines;
+  return lines.filter(Boolean);
+}
+
+// Band heights depend only on the spec (which bands hold side routes), so the build can size the box first.
+function bandRows(spec) {
+  const c = spec.cycle;
+  return c.hosts.map((h) => ((c.side ?? []).some((s) => s.host === h.key) && c.stages.some((s) => s.host === h.key) ? 2 : 1));
+}
+const bandH = (rows) => BAND.top + rows * CARD.h + (rows - 1) * BAND.rowGap + BAND.bottom;
+
+function narrowWalk(spec, top = 0) {
+  const ring = spec.cycle.stages, ys = [], runs = [];
+  let y = top;
+  ring.forEach((s, i) => {
+    if (i === 0 || s.host !== ring[i - 1].host) { runs.push({ host: s.host, y0: y, first: i }); y += NCARD.strip; }
+    ys.push(y + NCARD.h / 2);
+    y += NCARD.h + NCARD.gap;
+    runs[runs.length - 1].y1 = y - NCARD.gap + 6;
+  });
+  return { ys, runs, h: y - top };
+}
+
+export const cycleHeight = {
+  wide: (spec) => 6 + bandRows(spec).reduce((sum, r) => sum + bandH(r) + BAND.gap, 0) + CAPTION.wide,
+  narrow: (spec) => 8 + Math.max(narrowWalk(spec).h, (spec.cycle.side ?? []).length * (NCARD.h + 14)) + CAPTION.narrow,
+};
+
+// Columns: the adult sits in column 0; each next stage moves one column right, or stays in the column when it
+// crosses into another band (a vertical arrow), so host changes read as arrows crossing band edges.
+function columns(spec) {
+  const c = spec.cycle, ring = c.stages, n = ring.length, col = {}, taken = new Set();
+  const band = (s) => hostIndex(spec, s.host);
+  const adult = ring[n - 1];
+  col[adult.key] = adult.col ?? 0;
+  taken.add(`${band(adult)}:${col[adult.key]}`);
+  const clear = (k, b0, b1) => { for (let b = Math.min(b0, b1) + 1; b < Math.max(b0, b1); b++) if (taken.has(`${b}:${k}`)) return false; return true; };
+  let prev = adult;
+  ring.slice(0, n - 1).forEach((s, i) => {
+    let k = s.col;
+    if (k === undefined) {
+      k = band(s) !== band(prev) && clear(col[prev.key], band(prev), band(s)) ? col[prev.key] : col[prev.key] + 1;
+      while (taken.has(`${band(s)}:${k}`)) k++;
+      // The stage before the adult must not sit straight under it behind other cards.
+      if (i === n - 2 && band(s) !== band(adult) && k === col[adult.key] && !clear(k, band(s), band(adult))) { k++; while (taken.has(`${band(s)}:${k}`)) k++; }
+    }
+    col[s.key] = k;
+    taken.add(`${band(s)}:${k}`);
+    prev = s;
+  });
+  return col;
+}
+
+function placeWide(spec, box) {
+  const c = spec.cycle, side = c.side ?? [];
+  const col = columns(spec);
+  const rows = bandRows(spec);
+  const bands = [];
+  let y = box.y + 6;
+  rows.forEach((r, b) => { bands.push({ b, y, h: bandH(r), rows: r }); y += bandH(r) + BAND.gap; });
+  const rowY = (b, sub) => bands[b].y + BAND.top + CARD.h / 2 + sub * (CARD.h + BAND.rowGap);
+  const rowOf = (b, sub) => bands.slice(0, b).reduce((sum, x) => sum + x.rows, 0) + sub;
+  // Side nodes: the side row of their band, at the column nearest their `from` that no vertical arrow crosses.
+  const ringKeys = c.stages.map((s) => s.key);
+  const verticalCols = new Set();
+  c.stages.forEach((s, i) => {
+    const t = c.stages[(i + 1) % c.stages.length];
+    if (s.host !== t.host) verticalCols.add(col[s.key]);
+  });
+  const sideTaken = new Set();
+  for (const s of side) {
+    const b = hostIndex(spec, s.host), from = col[s.from] ?? 0;
+    let k = s.col;
+    if (k === undefined) {
+      for (const d of [0, 1, -1, 2, -2, 3, 4, 5]) {
+        const cand = from + d;
+        if (cand < 0 || sideTaken.has(`${b}:${cand}`)) continue;
+        if (rows[b] === 1 && Object.entries(col).some(([key, k]) => k === cand && ringKeys.includes(key) && c.stages.find((x) => x.key === key).host === s.host)) continue;
+        if (verticalCols.has(cand) && rows[b] === 2 && bands.some((x) => x.b > b)) continue;
+        k = cand;
+        break;
+      }
+    }
+    col[s.key] = k ?? from;
+    sideTaken.add(`${b}:${col[s.key]}`);
+  }
+  const ncols = Math.max(3, ...Object.values(col)) + 1;
+  const pitch = Math.min(230, (box.w - 24 - CARD.w) / Math.max(1, ncols - 1));
+  const w = Math.max(112, Math.min(CARD.w, pitch - 40));
+  const total = (ncols - 1) * pitch + w;
+  const x0 = box.x + (box.w - total) / 2 + w / 2;
+  const pos = {}, cells = {};
+  for (const s of [...c.stages, ...side]) {
+    const b = hostIndex(spec, s.host), sub = ringKeys.includes(s.key) || rows[b] === 1 ? 0 : 1;
+    pos[s.key] = { x: x0 + col[s.key] * pitch, y: rowY(b, sub), w, h: CARD.h, row: rowOf(b, sub), col: col[s.key], band: b };
+    cells[`${pos[s.key].row}:${col[s.key]}`] = s.key;
+  }
+  return { pos, bands, cells, pitch, w, ncols, x0 };
+}
+
+// Orthogonal route between two cards: straight in a row or column, an elbow otherwise, or a hop over a blocked row.
+function route(a, b, grid) {
+  const { cells, ncols, x0, pitch } = grid;
+  const busy = (row, from, to) => { for (let k = Math.min(from, to) + 1; k < Math.max(from, to); k++) if (cells[`${row}:${k}`]) return true; return false; };
+  const colBusy = (k, r0, r1) => { for (let r = Math.min(r0, r1) + 1; r < Math.max(r0, r1); r++) if (cells[`${r}:${k}`]) return true; return false; };
+  const dx = Math.sign(b.x - a.x), dy = Math.sign(b.y - a.y);
+  if (a.row === b.row) {
+    if (!busy(a.row, a.col, b.col)) return [{ x: a.x + dx * a.w / 2, y: a.y }, { x: b.x - dx * (b.w / 2 + 3), y: b.y }];
+    const yu = a.y - a.h / 2 - 13;
+    return [{ x: a.x + dx * 16, y: a.y - a.h / 2 }, { x: a.x + dx * 16, y: yu }, { x: b.x - dx * 16, y: yu }, { x: b.x - dx * 16, y: b.y - b.h / 2 - 3 }];
+  }
+  const start = { x: a.x, y: a.y + dy * a.h / 2 }, end = { x: b.x, y: b.y - dy * (b.h / 2 + 3) };
+  const nearA = a.y + dy * (a.h / 2 + 15), nearB = b.y - dy * (b.h / 2 + 15);
+  if (a.col === b.col && !colBusy(a.col, a.row, b.row)) return [start, end];
+  // Turn next to the source first: the source column often carries the arrow coming the other way.
+  if (!colBusy(b.col, a.row, b.row)) return [start, { x: a.x, y: nearA }, { x: b.x, y: nearA }, end];
+  if (!colBusy(a.col, a.row, b.row)) return [start, { x: a.x, y: nearB }, { x: b.x, y: nearB }, end];
+  // Detour through the clear column nearest both ends, or past the last column.
+  let best = ncols, cost = Infinity;
+  for (let k = 0; k < ncols; k++) if (!colBusy(k, a.row, b.row) && !cells[`${a.row}:${k}`] && !cells[`${b.row}:${k}`]) {
+    const d = Math.abs(k - a.col) + Math.abs(k - b.col);
+    if (d < cost) { cost = d; best = k; }
+  }
+  const xk = best < ncols ? x0 + best * pitch : x0 + (ncols - 1) * pitch + a.w / 2 + 14;
+  return [start, { x: a.x, y: nearA }, { x: xk, y: nearA }, { x: xk, y: nearB }, { x: b.x, y: nearB }, end];
+}
+
+function edgeSvg({ key, note, pts, how, cls, labelled, maxW, boxes, bounds, xAt, pending }) {
+  const d = pts.map((p, i) => `${i ? "L" : "M"}${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join("");
+  const end = pts[pts.length - 1], prev = pts[pts.length - 2];
+  const ang = Math.atan2(end.y - prev.y, end.x - prev.x), s = 7;
+  const head = `M${end.x.toFixed(1)} ${end.y.toFixed(1)}L${(end.x - s * Math.cos(ang - 0.45)).toFixed(1)} ${(end.y - s * Math.sin(ang - 0.45)).toFixed(1)}L${(end.x - s * Math.cos(ang + 0.45)).toFixed(1)} ${(end.y - s * Math.sin(ang + 0.45)).toFixed(1)}Z`;
+  // Try each segment, longest first: above or below a horizontal run, right or left of a vertical one.
+  // Take the first spot that clears cards, other labels and the canvas edge; the ✗ goes on that segment.
+  const segs = pts.slice(0, -1).map((p, i) => ({ p, q: pts[i + 1], len: Math.hypot(pts[i + 1].x - p.x, pts[i + 1].y - p.y) })).sort((u, v) => v.len - u.len);
+  const longest = segs[0];
+  let mid = xAt ?? { x: (longest.p.x + longest.q.x) / 2, y: (longest.p.y + longest.q.y) / 2 };
+  let label = "";
+  if (labelled && how) {
+    const spots = [];
+    for (const { p, q, len } of segs) {
+      const m = { x: (p.x + q.x) / 2, y: (p.y + q.y) / 2 };
+      if (Math.abs(q.x - p.x) > Math.abs(q.y - p.y)) {
+        // A wide wrap first; a narrow one (more lines) if the arrow is short.
+        for (const chars of [Math.max(14, Math.floor((len - 14) / CH)), Math.max(8, Math.floor((len - 18) / CH))]) {
+          const lines = wrap(how, chars).slice(0, 5);
+          const w = Math.max(...lines.map((l) => l.length)) * CH, h = lines.length * 11;
+          for (const t of [0.5, 0.3, 0.7]) {
+            const x = p.x + (q.x - p.x) * t;
+            spots.push({ lines, anchor: "middle", x, y: m.y - 10 - (lines.length - 1) * 11, box: { x0: x - w / 2, x1: x + w / 2, y0: m.y - 9 - h, y1: m.y - 7 } });
+            spots.push({ lines, anchor: "middle", x, y: m.y + 17, box: { x0: x - w / 2, x1: x + w / 2, y0: m.y + 7, y1: m.y + 9 + h } });
+          }
+        }
+      } else {
+        const lines = wrap(how, Math.max(10, Math.floor(maxW / CH))).slice(0, 3);
+        const w = Math.max(...lines.map((l) => l.length)) * CH, h = lines.length * 11;
+        for (const dy of [0, -16, 16, -30, 30]) {
+          const yc = m.y + dy;
+          if (yc < Math.min(p.y, q.y) || yc > Math.max(p.y, q.y)) continue;
+          const y0 = yc - ((lines.length - 1) * 11) / 2 + 3.5;
+          spots.push({ lines, anchor: "start", x: m.x + 11, y: y0, box: { x0: m.x + 10, x1: m.x + 12 + w, y0: y0 - 9, y1: y0 - 9 + h } });
+          spots.push({ lines, anchor: "end", x: m.x - 11, y: y0, box: { x0: m.x - 12 - w, x1: m.x - 10, y0: y0 - 9, y1: y0 - 9 + h } });
+        }
+      }
+    }
+    const inBounds = (b) => !bounds || (b.x0 >= bounds.x0 && b.x1 <= bounds.x1);
+    const spot = spots.find((sp) => inBounds(sp.box) && !boxes.some((b) => hits(b, sp.box))) ?? spots.find((sp) => inBounds(sp.box)) ?? spots[0];
+    boxes.push(spot.box);
+    label = `<text class="cyc-how" x="${spot.x.toFixed(1)}" y="${spot.y.toFixed(1)}" text-anchor="${spot.anchor}">${spot.lines.map((l, i) => `<tspan x="${spot.x.toFixed(1)}" dy="${i ? 11 : 0}">${esc(l)}</tspan>`).join("")}</text>`;
+  }
+  // Wide figures place every ✗ after all labels are down (see placeX); phones pass a fixed spot.
+  const xMark = xAt || !pending ? `x="${mid.x.toFixed(1)}" y="${(mid.y + 6).toFixed(1)}"` : `@@X${pending.push(pts) - 1}@@`;
+  return `<g class="cyc-edge ${cls}" data-edge="${esc(key)}" tabindex="0" data-note="${esc(note)}"><path class="cyc-line" d="${d}"/><path class="cyc-head" d="${head}"/>${label}<text class="cyc-x" ${xMark} text-anchor="middle">✗</text></g>`;
 }
 
 function nodeSvg(spec, s, r, isSide) {
   const c = spec.cycle, hi = hostIndex(spec, s.host), h = c.hosts[hi];
-  const tag = h.short ?? h.label;
-  const next = isSide ? s.back ? (c.stages.find((x) => x.key === s.back) ?? s).label : null : null;
+  const next = isSide && s.back ? (c.stages.find((x) => x.key === s.back) ?? s).label : null;
   const note = spec.notes?.[s.key] ?? `${s.label}: ${h.label}${s.where ? `, ${s.where}` : ""}.${isSide && !s.back ? " Dead end: the cycle cannot continue from here." : ""}${next ? ` Rejoins the cycle at ${next}.` : ""}`;
-  const dead = isSide && !s.back ? `<text class="cyc-dead" x="${r.x.toFixed(1)}" y="${(r.y + r.h / 2 + 13).toFixed(1)}" text-anchor="middle">dead end</text>` : "";
-  return `<g id="cyc-n-${esc(s.key)}" class="cyc-node cyc-h${hi % 4}${isSide ? " cyc-side-node" : ""}" tabindex="0" data-note="${esc(note)}"><rect x="${(r.x - r.w / 2).toFixed(1)}" y="${(r.y - r.h / 2).toFixed(1)}" width="${r.w}" height="${r.h}" rx="7"/><text class="cyc-name" x="${r.x.toFixed(1)}" y="${(r.y - 3).toFixed(1)}" text-anchor="middle">${esc(s.label)}</text><text class="cyc-host" x="${r.x.toFixed(1)}" y="${(r.y + 12).toFixed(1)}" text-anchor="middle">${esc(tag)}</text>${dead}</g>`;
+  const max = Math.floor((r.w - 14) / CH);
+  const lines = wrap(s.where ?? "", max).slice(0, isSide && !s.back ? 1 : 2);
+  const left = r.x - r.w / 2 + 8, top = r.y - r.h / 2;
+  const desc = lines.map((l, i) => `<text class="cyc-desc" x="${left.toFixed(1)}" y="${(top + 33 + i * 12).toFixed(1)}">${esc(l)}</text>`).join("");
+  const dead = isSide && !s.back ? `<text class="cyc-dead" x="${left.toFixed(1)}" y="${(top + 33 + lines.length * 12).toFixed(1)}">dead end</text>` : "";
+  return `<g id="cyc-n-${esc(s.key)}" class="cyc-node cyc-h${hi % 5}${isSide ? " cyc-side-node" : ""}${s.amp ? " cyc-amp" : ""}" tabindex="0" data-note="${esc(note)}"><rect x="${(r.x - r.w / 2).toFixed(1)}" y="${top.toFixed(1)}" width="${r.w}" height="${r.h}" rx="6"/><text class="cyc-name" x="${left.toFixed(1)}" y="${(top + 18).toFixed(1)}">${esc(s.label)}</text>${desc}${dead}</g>`;
+}
+
+// The point on an arrow nearest its middle whose ✗ clears every label.
+function placeX(pts, boxes) {
+  let total = 0;
+  for (let i = 1; i < pts.length; i++) total += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y);
+  const samples = [];
+  let run = 0;
+  for (let i = 1; i < pts.length; i++) {
+    const a = pts[i - 1], b = pts[i], l = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+    for (let t = 0; t <= l; t += 4) samples.push({ x: a.x + ((b.x - a.x) * t) / l, y: a.y + ((b.y - a.y) * t) / l, at: Math.abs(run + t - total / 2) });
+    run += l;
+  }
+  samples.sort((u, v) => u.at - v.at);
+  const pt = samples.find((q) => !boxes.some((b) => hits(b, { x0: q.x - 11, x1: q.x + 11, y0: q.y - 14, y1: q.y + 13 }))) ?? samples[0];
+  return `x="${pt.x.toFixed(1)}" y="${(pt.y + 6).toFixed(1)}"`;
+}
+
+const hits = (a, b) => a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
+const segBox = (p, q) => ({ x0: Math.min(p.x, q.x) - 2, x1: Math.max(p.x, q.x) + 2, y0: Math.min(p.y, q.y) - 2, y1: Math.max(p.y, q.y) + 2 });
+
+// Band title: role in caps, then the host; put in whichever corner strip no arrow or label crosses.
+function bandSvg(spec, band, box, blockers) {
+  const h = spec.cycle.hosts[band.b], role = (h.role ?? "").toUpperCase(), label = h.label;
+  const w = role.length * 7 + label.length * CH + 18;
+  const corners = [["l", band.y + 16], ["l", band.y + band.h - 8], ["r", band.y + 16], ["r", band.y + band.h - 8]];
+  let pick = corners[0];
+  for (const cn of corners) {
+    const x0 = cn[0] === "l" ? box.x + 12 : box.x + box.w - 12 - w;
+    if (!blockers.some((b) => hits(b, { x0, x1: x0 + w, y0: cn[1] - 10, y1: cn[1] + 3 }))) { pick = cn; break; }
+  }
+  const x = pick[0] === "l" ? box.x + 12 : box.x + box.w - 12;
+  const anchor = pick[0] === "l" ? "start" : "end";
+  return `<rect class="cyc-band cyc-h${band.b % 5}" x="${box.x}" y="${band.y.toFixed(1)}" width="${box.w}" height="${band.h}" rx="10"/><text class="cyc-band-title" x="${x}" y="${pick[1].toFixed(1)}" text-anchor="${anchor}">${role ? `<tspan class="cyc-band-role">${esc(role)}</tspan> ` : ""}<tspan class="cyc-band-sub">${esc(label)}</tspan></text>`;
+}
+
+function frameWide(spec, box) {
+  const grid = placeWide(spec, box);
+  const { pos, bands, pitch } = grid;
+  const cardBoxes = Object.values(pos).map((r) => ({ x0: r.x - r.w / 2 - 2, x1: r.x + r.w / 2 + 2, y0: r.y - r.h / 2 - 2, y1: r.y + r.h / 2 + 2 }));
+  const labels = [...cardBoxes], lines = [];
+  const bounds = { x0: box.x + 4, x1: box.x + box.w - 4 };
+  const pending = [];
+  let out = edges(spec).map((e) => {
+    const a = pos[e.from], b = pos[e.to], key = `${e.from}>${e.to}`;
+    let pts = route(a, b, grid);
+    if (e.pair) pts = pts.map((p) => ({ x: p.x + (e.back ? -6 : 6), y: p.y + (e.back ? -6 : 6) }));
+    for (let i = 1; i < pts.length; i++) lines.push(segBox(pts[i - 1], pts[i]));
+    const note = e.how ? `${key.replace(">", " → ")}: ${e.how}` : key.replace(">", " → ");
+    return edgeSvg({ key, note, pts, how: e.how, cls: `${e.ring ? "cyc-ring-edge" : "cyc-side"}${e.amp ? " cyc-amp" : ""}`, labelled: true, maxW: pitch - 30, boxes: labels, bounds, pending });
+  }).join("");
+  out = out.replace(/@@X(\d+)@@/g, (_, i) => placeX(pending[+i], labels));
+  const nodes = [...spec.cycle.stages.map((s) => nodeSvg(spec, s, pos[s.key], false)), ...(spec.cycle.side ?? []).map((s) => nodeSvg(spec, s, pos[s.key], true))].join("");
+  const bandSvgs = bands.map((band) => bandSvg(spec, band, box, [...lines, ...labels])).join("");
+  const last = bands[bands.length - 1];
+  return { svg: `${bandSvgs}${out}${nodes}`, bottom: last.y + last.h };
+}
+
+function frameNarrow(spec, box) {
+  const c = spec.cycle, side = c.side ?? [];
+  const top = box.y + 8;
+  const { ys, runs } = narrowWalk(spec, top);
+  const cw = side.length ? box.w - 34 - SIDE_NARROW_W : box.w - 30;
+  const cx = box.x + 24 + cw / 2;
+  const pos = {};
+  c.stages.forEach((s, i) => { pos[s.key] = { x: cx, y: ys[i], w: cw, h: NCARD.h }; });
+  const used = [];
+  for (const s of side) {
+    const f = pos[s.from], b = pos[s.back] ?? f;
+    let y = (f.y + b.y) / 2;
+    while (used.some((u) => Math.abs(u - y) < NCARD.h + 10)) y += NCARD.h + 12;
+    used.push(y);
+    pos[s.key] = { x: box.x + box.w - SIDE_NARROW_W / 2 - 2, y, w: SIDE_NARROW_W, h: NCARD.h };
+  }
+  const runSvg = runs.map((r) => {
+    const hi = hostIndex(spec, r.host), h = c.hosts[hi];
+    const room = Math.floor((cw + 4) / CH);
+    let title = `${(h.role ?? "").toUpperCase()} ${h.label}`.trim();
+    if (title.length > room) title = `${title.slice(0, room - 1)}…`;
+    return `<rect class="cyc-band cyc-h${hi % 5}" x="${box.x + 18}" y="${r.y0.toFixed(1)}" width="${cw + 12}" height="${(r.y1 - r.y0).toFixed(1)}" rx="8"/><text class="cyc-band-title" x="${box.x + 24}" y="${(r.y0 + 15).toFixed(1)}"><tspan class="cyc-band-sub">${esc(title)}</tspan></text>`;
+  }).join("");
+  const out = edges(spec).map((e) => {
+    const a = pos[e.from], b = pos[e.to], key = `${e.from}>${e.to}`;
+    const note = e.how ? `${key.replace(">", " → ")}: ${e.how}` : key.replace(">", " → ");
+    let pts;
+    if (e.wrap) {
+      const xm = box.x + 9;
+      pts = [{ x: a.x - a.w / 2, y: a.y }, { x: xm, y: a.y }, { x: xm, y: b.y }, { x: b.x - b.w / 2 - 3, y: b.y }];
+    } else if (e.ring) pts = [{ x: a.x, y: a.y + a.h / 2 }, { x: b.x, y: b.y - b.h / 2 - 3 }];
+    else {
+      const off = e.pair ? (e.back ? -7 : 7) : 0;
+      const ax = a.x < b.x ? a.x + a.w / 2 : a.x - a.w / 2, bx = a.x < b.x ? b.x - b.w / 2 - 3 : b.x + b.w / 2 + 3;
+      const xm = (ax + bx) / 2;
+      pts = Math.abs(a.y - b.y) < 2 ? [{ x: ax, y: a.y + off }, { x: bx, y: b.y + off }] : [{ x: ax, y: a.y + off }, { x: xm + off, y: a.y + off }, { x: xm + off, y: b.y + off }, { x: bx, y: b.y + off }];
+    }
+    const p0 = pts[0], p1 = pts[1], len = Math.hypot(p1.x - p0.x, p1.y - p0.y) || 1, t = Math.min(10, len / 2) / len;
+    const xAt = e.wrap ? { x: pts[1].x, y: (pts[1].y + pts[2].y) / 2 } : { x: p0.x + (p1.x - p0.x) * t, y: p0.y + (p1.y - p0.y) * t + 4 };
+    return edgeSvg({ key, note, pts, how: e.how, cls: `${e.ring ? "cyc-ring-edge" : "cyc-side"}${e.amp ? " cyc-amp" : ""}`, labelled: false, maxW: 0, boxes: [], xAt });
+  }).join("");
+  const nodes = [...c.stages.map((s) => nodeSvg(spec, s, pos[s.key], false)), ...side.map((s) => nodeSvg(spec, s, pos[s.key], true))].join("");
+  const lastY = Math.max(...Object.values(pos).map((r) => r.y + r.h / 2));
+  return { svg: `${runSvg}${out}${nodes}`, bottom: lastY + 4 };
 }
 
 function edges(spec) {
   const c = spec.cycle, n = c.stages.length, out = [];
-  c.stages.forEach((s, i) => out.push({ from: s.key, to: c.stages[(i + 1) % n].key, how: s.how, ring: true, wrap: i === n - 1 }));
+  c.stages.forEach((s, i) => out.push({ from: s.key, to: c.stages[(i + 1) % n].key, how: s.how, ring: true, wrap: i === n - 1, amp: !!s.amp }));
   for (const s of c.side ?? []) {
     out.push({ from: s.from, to: s.key, how: s.how, ring: false, pair: s.back === s.from });
-    if (s.back) out.push({ from: s.key, to: s.back, how: s.backHow ?? "", ring: false, pair: s.back === s.from });
+    if (s.back) out.push({ from: s.key, to: s.back, how: s.backHow ?? "", ring: false, pair: s.back === s.from, back: true });
   }
   return out;
 }
@@ -159,7 +335,6 @@ export function validateCycle(spec) {
     if (!hosts.has(s.host)) errors.push(`stage ${s.key}: unknown host ${s.host}`);
     if (String(s.label).length > 18) errors.push(`stage ${s.key}: label over 18 characters`);
   }
-  for (const h of c.hosts) if (String(h.short ?? h.label).length > 20) errors.push(`host ${h.key}: tag over 20 characters (add short)`);
   for (const s of c.side ?? []) for (const k of [s.from, s.back].filter(Boolean)) if (!keys.has(k)) errors.push(`side ${s.key}: unknown stage ${k}`);
   const links = new Set(edges(spec).map((e) => `${e.from}>${e.to}`));
   for (const [name, cut] of Object.entries(c.cuts ?? {})) for (const link of cut.links ?? []) if (!links.has(link)) errors.push(`cut ${name}: no link ${link}`);
@@ -223,42 +398,12 @@ export function cycleDefaults(spec) {
 export const cycle = {
   name: "cycle",
   hint: "Slide through the stages · break a link",
+  width: { wide: 1000 },
   frame(spec, box) {
     const narrow = box.w < 500;
-    const { pos, center, lg, bottom } = place(spec, box, narrow);
-    const legendSvg = lg.items.map(({ h, i, text, x, y }) => `<g class="cyc-legend cyc-h${i % 4}" tabindex="0" data-note="${esc(h.role ? `${h.label}: ${h.role}.` : h.label)}"><rect class="cyc-sw" x="${box.x + x}" y="${box.y + y + 2}" width="13" height="13" rx="3"/><text x="${box.x + x + 20}" y="${box.y + y + 12.5}">${esc(text)}</text></g>`).join("");
-    const out = edges(spec).map((e) => {
-      const a = pos[e.from], b = pos[e.to];
-      const key = `${e.from}>${e.to}`;
-      const note = e.how ? `${key.replace(">", " → ")}: ${e.how}` : key.replace(">", " → ");
-      if (narrow && e.wrap) {
-        // Return path down the left margin, back up to the first stage.
-        const xm = box.x + 10, ya = a.y, yb = b.y;
-        const pts = [{ x: a.x - a.w / 2 - 4, y: ya }, { x: xm, y: ya }, { x: xm, y: yb }, { x: b.x - b.w / 2 - 4, y: yb }];
-        return edgeSvg({ key, note, pts, mid: { x: xm, y: (ya + yb) / 2 }, how: e.how, cls: "cyc-ring-edge", labelled: false });
-      }
-      let ctrl;
-      const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
-      if (e.ring && !narrow) {
-        const dx = mx - center.x, dy = my - center.y, len = Math.hypot(dx, dy) || 1;
-        const chord = Math.hypot(b.x - a.x, b.y - a.y);
-        ctrl = { x: mx + (dx / len) * chord * 0.16, y: my + (dy / len) * chord * 0.16 };
-      } else ctrl = { x: mx, y: my };
-      let a2 = a, b2 = b;
-      if (!e.ring) {
-        // Side routes run straight; an out-and-back pair is pushed apart (the normal flips with direction).
-        const dx = b.x - a.x, dy = b.y - a.y, len = Math.hypot(dx, dy) || 1;
-        const off = e.pair ? 7 : 0;
-        const ox = (-dy / len) * off, oy = (dx / len) * off;
-        a2 = { ...a, x: a.x + ox, y: a.y + oy }; b2 = { ...b, x: b.x + ox, y: b.y + oy };
-        ctrl = { x: (a2.x + b2.x) / 2, y: (a2.y + b2.y) / 2 };
-      }
-      const { pts, mid, all } = curve(a2, b2, ctrl);
-      return edgeSvg({ key, note, pts, mid, all, rects: Object.values(pos), how: e.how, cls: e.ring ? "cyc-ring-edge" : "cyc-side", labelled: !narrow && e.ring });
-    }).join("");
-    const nodes = [...spec.cycle.stages.map((s) => nodeSvg(spec, s, pos[s.key], false)), ...(spec.cycle.side ?? []).map((s) => nodeSvg(spec, s, pos[s.key], true))].join("");
-    const cap = `<text id="cyc-caption" class="cyc-caption" x="${box.x + 4}" y="${(bottom + 14).toFixed(1)}"></text>`;
-    return `<g class="study-cycle">${legendSvg}${out}${nodes}${cap}</g>`;
+    const { svg, bottom } = narrow ? frameNarrow(spec, box) : frameWide(spec, box);
+    const cap = `<text id="cyc-caption" class="cyc-caption" x="${box.x + 4}" y="${(bottom + 20).toFixed(1)}"></text>`;
+    return `<g class="study-cycle">${svg}${cap}</g>`;
   },
   render: (svg, data, params, box, ctx) => {
     const c = ctx.spec.cycle, n = c.stages.length;
@@ -313,23 +458,28 @@ export const cycle = {
     return `<section class="study-meta cyc-text"><h2>The cycle, step by step</h2><ol>${steps}</ol>${side ? `<h2>Side routes</h2><ul>${side}</ul>` : ""}${cuts ? `<h2>Break a link</h2><ul>${cuts}</ul>` : ""}</section>`;
   },
   css: `
-.cyc-legend text{fill:var(--anatomy-text);font:11px var(--anatomy-mono)}
-.cyc-legend,.cyc-node,.cyc-edge{outline:none}
-.cyc-sw,.cyc-node rect{fill-opacity:.18;stroke-width:1.5}
-.cyc-h0 rect{fill:var(--anatomy-blue);stroke:var(--anatomy-blue)}
-.cyc-h1 rect{fill:var(--anatomy-red);stroke:var(--anatomy-red)}
-.cyc-h2 rect{fill:var(--anatomy-green);stroke:var(--anatomy-green)}
-.cyc-h3 rect{fill:var(--anatomy-strong);stroke:var(--anatomy-strong)}
+.study-cycle{--cyc-amp:#e4ad55}
+body[data-theme="light"] .study-cycle{--cyc-amp:#9a5a0c}
+.cyc-h0{--h:var(--anatomy-blue)}.cyc-h1{--h:var(--anatomy-red)}.cyc-h2{--h:var(--anatomy-green)}.cyc-h3{--h:var(--anatomy-strong)}.cyc-h4{--h:var(--anatomy-mid)}
+.cyc-band{fill:var(--h);fill-opacity:.07;stroke:var(--h);stroke-opacity:.4;stroke-width:1}
+.cyc-band-title{font:10px var(--anatomy-mono);fill:var(--anatomy-text)}
+.cyc-band-role{font-weight:700;letter-spacing:.08em;fill:var(--anatomy-strong)}
+.cyc-node,.cyc-edge{outline:none}
+.cyc-node rect{fill:var(--anatomy-face);stroke:var(--h);stroke-width:1.2}
 .cyc-side-node rect{stroke-dasharray:5 3}
-.cyc-node.cyc-on rect{stroke-width:3;fill-opacity:.34}
-.cyc-node:focus-visible rect,.cyc-legend:focus-visible rect{stroke-width:3}
+.cyc-node.cyc-amp rect{stroke:var(--cyc-amp);stroke-width:2}
+.cyc-node.cyc-on rect{stroke:var(--anatomy-strong);stroke-width:3}
+.cyc-node:focus-visible rect{stroke-width:3}
 .cyc-name{fill:var(--anatomy-strong);font:700 11.5px var(--anatomy-mono)}
-.cyc-host{fill:var(--anatomy-text);font:10px var(--anatomy-mono)}
+.cyc-desc{fill:var(--anatomy-text);font:10px var(--anatomy-mono)}
 .cyc-dead{fill:var(--study-red-ink,var(--anatomy-red));font:10px var(--anatomy-mono)}
 .cyc-line{fill:none;stroke:var(--anatomy-mid);stroke-width:1.5}
 .cyc-head{fill:var(--anatomy-mid)}
 .cyc-side .cyc-line{stroke-dasharray:5 4}
 .cyc-how{fill:var(--anatomy-text);font:10px var(--anatomy-mono);paint-order:stroke;stroke:var(--anatomy-card);stroke-width:4px;stroke-linejoin:round}
+.cyc-edge.cyc-amp .cyc-line{stroke:var(--cyc-amp);stroke-width:2}
+.cyc-edge.cyc-amp .cyc-head{fill:var(--cyc-amp)}
+.cyc-edge.cyc-amp .cyc-how{fill:var(--cyc-amp);font-weight:700}
 .cyc-x{display:none;fill:var(--study-red-ink,var(--anatomy-red));font:700 17px var(--anatomy-mono);paint-order:stroke;stroke:var(--anatomy-card);stroke-width:4px}
 .cyc-edge.cyc-on .cyc-line{stroke:var(--anatomy-strong);stroke-width:2.5}
 .cyc-edge.cyc-on .cyc-head{fill:var(--anatomy-strong)}
