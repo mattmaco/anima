@@ -24,14 +24,15 @@ Keep course-derived specs in `study/local/` (git-ignored); course material shoul
 |---|---|---|
 | `chunk` | number | Chunk number in the source notes; the key a reader app joins on |
 | `fig`, `title` | string | Card label and title |
-| `view` | string or string[] | `curves`, `replicates`, `popgrid`, `trajectory`, `table`; an array stacks views vertically |
+| `view` | string or string[] | `curves`, `replicates`, `popgrid`, `trajectory`, `table`, `cycle`; an array stacks views vertically |
 | `params` | `{ name: { min, max, step, value, label, when? } }` or `{ name: { options, value, label, when? } }` | Sliders and selects. `when: { other: value }` hides the control unless params match |
-| `model` | `(params, rng, lib) → data` | Pure; drives both the drawing and the readout |
+| `model` | `(params, rng, lib, spec) → data` | Pure; drives both the drawing and the readout. `spec` is the page's data-only spec (no functions) |
 | `readout` | `(data, params, gen) → string` | Bottom-right text; `gen` is the revealed generation for stepped views (undefined otherwise) |
 | `states` | `{ name: partialParams }` | Named states (JSON only). The first is the initial state |
 | `notes` | `{ partId: string }` | One-line notes shown on hover or focus |
 | `sources` | string[] | Cites back to the notes, e.g. `"P1 11–12: p², 2pq, q²"` |
 | `simplified` | string[] | What the figure leaves out |
+| `facts` | `[[term, text], ...]`, optional | A "Key facts" list under the controls |
 | `seed` | number, optional | Seed for `rng` (default 1) |
 | `quiz` | `{ course, chunks }`, optional | Copied into the manifest, for linking to a quiz bank whose chunk numbers differ |
 
@@ -58,7 +59,10 @@ The model returns `current: number[][]` (per generation, per individual: 2 = A1A
 **`table`**: computed values in rows, for checks that are read rather than plotted (expected vs observed, two ratios side by side).
 `table: { columns: [{ key, label, short? }], rows: [{ key, label, short? }] }`. The model returns `cells: { <row key>: { <column key>: string | { text, flag: true } } }`, already formatted. A flagged cell is drawn in red ink after a ✗, so the meaning never rests on colour alone. `short` labels replace long ones in the narrow layout. The table's height follows its row count. Row and column labels take their note from `notes[key]`.
 
-A view module exports `{ name, frame(spec, box) → svg, render(svg, data, params, box, ctx) }`. `frame` runs at build time; `render` is copied into the page and must be self-contained. `ctx` holds `{ spec, model, lib, cache, gen, generations }`.
+**`cycle`**: a life cycle as a loop of stages coloured by host, with side routes and "break a link" cuts. A cycle spec is data only: the build fills `params` (a stage slider and a cut select), `states` (one per cut), `model` and `readout`.
+`cycle: { hosts: [{ key, label, short?, role? }], stages: [{ key, label, host, where?, how }], side: [{ key, label, host, from, how, back?, backHow?, pos? }], cuts: { name: { links: ["from>to"], text } } }`. List stages from the egg with the adult last; `how` leads to the next stage. A side node without `back` is drawn as a dead end. A cut breaks its links and fades the stages that stop forming: those downstream of the break, up to the adult, unless another loop (autoinfection, a reservoir host) still feeds them. Wide pages draw a ring with `how` on each arrow; phones get one column with the return path down the left. The page also lists the cycle in words. The build checks every host, stage and link name.
+
+A view module exports `{ name, frame(spec, box) → svg, render(svg, data, params, box, ctx) }`, and optionally `hint`, `css` and `html(spec)` (markup placed under the controls). `frame` runs at build time; `render` is copied into the page and must be self-contained. `ctx` holds `{ spec, model, lib, cache, gen, generations }`.
 
 `frame` runs twice per page: for a wide box (760 wide, the static SVG) and a narrow one (360 wide). At 700 px and below, the runtime swaps in the narrow markup and viewBox, clears `ctx.cache` and redraws, so SVG text stays legible on phones. `render` must take all its geometry from `box` (for example, `replicates` stacks its panels when `box.w < 500`). Escape any spec text a view writes into markup with `study/esc.mjs`.
 

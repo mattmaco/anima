@@ -5,12 +5,13 @@ import { figureSvg, pageHtml, plateHtml } from "../kit/iso-kit.mjs";
 import { esc } from "./esc.mjs";
 import { lib } from "./lib.mjs";
 import { curves } from "./views/curves.mjs";
+import { cycle, cycleDefaults, cycleHeight, validateCycle } from "./views/cycle.mjs";
 import { popgrid } from "./views/popgrid.mjs";
 import { replicates } from "./views/replicates.mjs";
 import { table, tableHeight } from "./views/table.mjs";
 import { trajectory } from "./views/trajectory.mjs";
 
-export const VIEWS = ["curves", "replicates", "popgrid", "trajectory", "table"];
+export const VIEWS = ["curves", "replicates", "popgrid", "trajectory", "table", "cycle"];
 const REQUIRED = ["chunk", "fig", "title", "view", "params", "model", "readout", "states", "sources", "simplified"];
 
 // Turn a function back into a value from its source alone, so anything it closes over is lost.
@@ -24,10 +25,21 @@ export function revive(fn) {
   return new Function("lib", `return (${fnSource(fn)});`)(lib);
 }
 
-export function validateSpec(spec) {
+// Views may fill fields a spec leaves out (a cycle spec is data only) and check their own config.
+const DEFAULTS = { cycle: cycleDefaults };
+const VIEW_CHECKS = { cycle: validateCycle };
+const viewsOf = (spec) => [spec.view ?? []].flat();
+
+export function prepare(spec) {
+  return viewsOf(spec).reduce((s, view) => (DEFAULTS[view] ? DEFAULTS[view](s) : s), spec);
+}
+
+export function validateSpec(raw) {
+  const spec = prepare(raw);
   const errors = REQUIRED.filter((key) => spec[key] === undefined).map((key) => `missing field: ${key}`);
   for (const view of [spec.view ?? []].flat()) if (!VIEWS.includes(view)) errors.push(`unknown view: ${view}`);
   for (const key of ["model", "readout"]) if (spec[key] !== undefined && typeof spec[key] !== "function") errors.push(`${key} must be a function`);
+  for (const view of viewsOf(spec)) if (VIEW_CHECKS[view]) errors.push(...VIEW_CHECKS[view](spec));
   return errors;
 }
 
@@ -53,7 +65,9 @@ function badValue(value) {
   return false;
 }
 
-export function probeModel(spec) {
+export function probeModel(raw) {
+  const spec = prepare(raw);
+  const data = JSON.parse(JSON.stringify(Object.fromEntries(Object.entries(spec).filter(([, v]) => typeof v !== "function"))));
   let model, readout;
   try {
     model = revive(spec.model);
@@ -65,9 +79,9 @@ export function probeModel(spec) {
   for (const params of probeCases(spec)) {
     const where = Object.entries(params).map(([k, v]) => `${k}=${v}`).join(", ");
     try {
-      const data = model(params, lib.mulberry32(spec.seed ?? 1), lib);
-      if (badValue(data)) { errors.push(`NaN or undefined in model at ${where}`); continue; }
-      const text = readout(data, params);
+      const out = model(params, lib.mulberry32(spec.seed ?? 1), lib, data);
+      if (badValue(out)) { errors.push(`NaN or undefined in model at ${where}`); continue; }
+      const text = readout(out, params);
       if (typeof text !== "string" || /NaN|undefined/.test(text)) errors.push(`bad readout at ${where}: ${text}`);
     } catch (error) {
       errors.push(`${error.message} (at ${where})`);
@@ -77,12 +91,12 @@ export function probeModel(spec) {
   return errors;
 }
 
-const VIEW_MODULES = { curves, replicates, popgrid, trajectory, table };
+const VIEW_MODULES = { curves, replicates, popgrid, trajectory, table, cycle };
 // Two layouts per page: wide (the static SVG) and narrow, which the runtime swaps in on phones so text stays legible.
 // A height may be a function of the spec (a table grows with its rows).
 const LAYOUT = {
-  wide: { width: 760, height: { curves: 320, replicates: 300, popgrid: 260, trajectory: 300, table: tableHeight } },
-  narrow: { width: 360, height: { curves: 280, replicates: 480, popgrid: 240, trajectory: 280, table: tableHeight } },
+  wide: { width: 760, height: { curves: 320, replicates: 300, popgrid: 260, trajectory: 300, table: tableHeight, cycle: cycleHeight.wide } },
+  narrow: { width: 360, height: { curves: 280, replicates: 480, popgrid: 240, trajectory: 280, table: tableHeight, cycle: cycleHeight.narrow } },
 };
 const RUNTIME = readFileSync(new URL("./runtime.js", import.meta.url), "utf8");
 const TOP = 40;
@@ -111,6 +125,12 @@ function controlsHtml(spec) {
   });
   const states = Object.keys(spec.states).map((name) => `<button type="button" data-state="${esc(name)}" aria-pressed="false">${esc(name)}</button>`).join("");
   return `<div class="study-states" role="group" aria-labelledby="study-states-title"><span id="study-states-title" class="study-kicker">Worked examples</span>${states}</div><div class="study-controls" role="group" aria-label="Model controls">${inputs.join("")}</div><p class="study-note" aria-live="polite">Hover or focus a label for a note.</p><p class="study-live" aria-live="polite"></p>`;
+}
+
+// Optional facts under the figure: [[term, text], ...].
+function factsHtml(spec) {
+  if (!spec.facts?.length) return "";
+  return `<section class="study-meta study-facts"><h2>Key facts</h2><dl>${spec.facts.map(([term, text]) => `<dt>${esc(term)}</dt><dd>${esc(text)}</dd>`).join("")}</dl></section>`;
 }
 
 function notesHtml(spec) {
@@ -164,6 +184,10 @@ body[data-theme="light"]{--study-red-ink:#d12f36;--study-green-ink:#1f7a50}
 .study-ind .l{opacity:.78}.study-ind .r{opacity:.6}
 .study-ind.g2 polygon{fill:var(--anatomy-blue)}.study-ind.g1 polygon{fill:var(--anatomy-strong)}.study-ind.g0 polygon{fill:var(--anatomy-red)}
 .study-figure[data-layout="narrow"]{max-width:480px}
+.study-facts dl{display:grid;grid-template-columns:max-content 1fr;gap:6px 16px;margin:6px 0 0}
+.study-facts dt{font:12px var(--anatomy-mono);color:var(--anatomy-strong)}
+.study-facts dd{margin:0}
+@media (max-width:560px){.study-facts dl{grid-template-columns:1fr}.study-facts dd{margin-bottom:6px}}
 @media (max-width:560px){.iso-plate-corner[data-corner="hint"]{display:none}.iso-plate-corner[data-corner="readout"]{left:0;white-space:normal;text-align:right;line-height:1.35}}
 `;
 
@@ -180,17 +204,19 @@ function bootScript(spec, wide, narrow) {
   return `const SPEC = ${JSON.stringify(config)};\nconst lib = ${libSrc};\nconst model = ${fnSource(spec.model)};\nconst readout = ${fnSource(spec.readout)};\nconst RENDERS = {${renders.join(",\n")}};\nconst LAYOUTS = ${JSON.stringify(layouts)};\n${RUNTIME}`;
 }
 
-export function buildPage(spec, { theme = "dark" } = {}) {
+export function buildPage(raw, { theme = "dark" } = {}) {
+  const spec = prepare(raw);
+  const views = [...new Set(viewsOf(spec))].map((name) => VIEW_MODULES[name]);
   const wide = layout(spec, "wide");
   const narrow = layout(spec, "narrow");
   const svg = figureSvg({ width: wide.width, height: wide.height, label: `${spec.title}. Interactive figure; use the controls below.`, body: wide.frames, className: "study-figure" });
-  const hint = spec.replicates ? "Drag a slider · Space: play/pause" : "Drag a slider";
+  const hint = spec.replicates ? "Drag a slider · Space: play/pause" : views.find((v) => v.hint)?.hint ?? "Drag a slider";
   const plate = plateHtml({ fig: spec.fig, title: spec.title, hint, body: svg });
   return pageHtml({
     title: `${spec.title} | Anima study`,
     theme,
     width: wide.width + 40,
-    body: `<style>${STUDY_CSS}</style>${plate}${controlsHtml(spec)}${notesHtml(spec)}`,
+    body: `<style>${STUDY_CSS}${views.map((v) => v.css ?? "").join("")}</style>${plate}${controlsHtml(spec)}${factsHtml(spec)}${views.map((v) => v.html?.(spec) ?? "").join("")}${notesHtml(spec)}`,
     script: bootScript(spec, wide, narrow),
   });
 }
@@ -200,7 +226,7 @@ async function loadSpecs(specDir) {
   const specs = [];
   for (const file of files) {
     const mod = await import(pathToFileURL(resolve(specDir, file)).href);
-    specs.push({ file, slug: basename(file, ".mjs"), spec: mod.default });
+    specs.push({ file, slug: basename(file, ".mjs"), spec: prepare(mod.default) });
   }
   return specs;
 }

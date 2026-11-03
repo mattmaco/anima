@@ -57,7 +57,7 @@ function announce() {
 }
 
 function update(animate = true) {
-  data = model({ ...params }, lib.mulberry32(SPEC.seed ?? 1), lib);
+  data = model({ ...params }, lib.mulberry32(SPEC.seed ?? 1), lib, SPEC);
   restart(animate);
   syncControls();
 }
