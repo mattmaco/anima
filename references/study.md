@@ -47,3 +47,7 @@ Build one or two figures per round, picking chunks that need different views, so
 - Do the notes' own process in the model rather than pasting its result: the selection survivors are computed from pool 1's zygotes (fewer than 3 capitals die), which gives the haplotype frequencies the slides leave out. Say so in `simplified`.
 - A three-column table at 390 px left only 5 px between "0.0000" and "✗ -0.0400". The overlap check passed, so only looking caught it. The table test now asks for an 8 px gap between cells in a row, and narrow tables give the label column 28% of the width.
 - `trajectory` clamps at 0, so plot |D|; the notes phrase it the same way ("recombination brings |D| to 0").
+- **Round 5 (Muller's ratchet).** A seeded stochastic model on `trajectory` is enough: the asexual population's least-loaded class is a staircase that only climbs, and the sexual one moves both ways. The irreversibility shows in the shape, so no new view was needed.
+- Two populations × two statistics as four series put red and green inside one population, and nothing grouped the colours. Plot one statistic per population and put the other in the readout; `trajectory` has no per-series line style to pair them.
+- A checking script must pass the spec's own `seed` to the model; with `mulberry32(1)` against a spec seeded 3, the numbers did not match the page.
+- Chunks that compare hypotheses (Fisher-Muller, Daphnia, Red Queen) get no figure; say so in the nearest figure's `simplified`.
