@@ -130,7 +130,7 @@ export function fish(id, o = {}) {
   s += line(smooth([[254,48],[262,74],[254,102]]), "hi");
   s += `<circle class="eye" cx="286" cy="64" r="4"/>`;
   s += line("M304 80L312 76", "hi");
-  return { svg: s, pts: { mouth: [312, 78], gut: [200, 98], gut2: [140, 100], flesh: [150, 64], flesh2: [190, 70], gills: [240, 78] }, lines: {}, w: 320, h: 140 };
+  return { svg: s, pts: { mouth: [312, 78], gut: [200, 98], gut2: [140, 100], flesh: [150, 64], flesh2: [190, 70], gills: [240, 78], skin: [180, 32], skin2: [120, 110], fin: [16, 66] }, lines: {}, w: 320, h: 140 };
 }
 
 // ---------- Blood-feeding fly / mosquito, side view facing right ----------
@@ -147,7 +147,9 @@ export function fly(id, o = {}) {
   s += tube([[172,70],[150,66],[112,70],[70,70],[24,68]], 2.6, { ...I("midgut", "Midgut"), body: "gutline" });
   s += line(mosq ? "M124 82L96 112L70 136M138 84L132 116L118 140M150 80L176 112L200 136" : "M120 84L104 120L96 136M136 86L134 124L126 140M150 80L164 118L176 136", "hi");
   s += line(mosq ? "M180 60L206 40L222 34M178 58L196 38L206 26" : "M184 58L204 40M182 56L196 36", "hi");
-  return { svg: s, pts: mosq ? { tip: [232, 98], head: [174, 68], thorax: [136, 64], midgut: [90, 71] } : { tip: [192, 86], head: [174, 68], thorax: [136, 64], midgut: [90, 74] }, lines: {}, w: 240, h: 140 };
+  if (o.sal) s += organ([[144,58],[158,50],[166,60],[158,72],[146,70]], I("sal", "Salivary glands"));
+  const extra = { sal: [156, 61], wall: [80, 62] };
+  return { svg: s, pts: mosq ? { tip: [232, 98], head: [174, 68], thorax: [136, 64], midgut: [90, 71], ...extra } : { tip: [192, 86], head: [174, 68], thorax: [136, 64], midgut: [90, 74], ...extra }, lines: {}, w: 240, h: 140 };
 }
 
 
@@ -261,4 +263,55 @@ export function gill(id, o = {}) {
   return { svg: s, pts: { f1: [52, 56], f2: [90, 34], f3: [130, 22], arch: [100, 72] }, lines: {}, w: 200, h: 160 };
 }
 
-export const ACTORS = { human, snail, water, soil, copepod, fish, fly, quad, crab, plant, tadpole, frog, insect, annelid, gill };
+// ---------- Rodent (rat; rabbit variant), side view facing right ----------
+export function rodent(id, o = {}) {
+  const I = (k, d) => ({ id: `${id}-${k}`, label: d, info: pick(o, k, d), tone: tn(o, k), c: "rodent-" + k });
+  const rab = o.kind === "rabbit";
+  const sil = rab
+    ? [[130,124],[146,92],[196,70],[270,62],[340,66],[392,80],[428,96],[460,104],[492,114],[506,128],[494,138],[466,142],[438,150],[410,164],[380,172],[300,176],[220,174],[166,166],[136,150]]
+    : [[130,128],[150,98],[200,78],[270,70],[340,72],[390,82],[430,96],[462,110],[496,122],[512,130],[500,138],[470,142],[440,148],[410,160],[380,168],[300,172],[220,170],[170,162],[138,148]];
+  let s = `<ellipse class="halo" cx="320" cy="200" rx="170" ry="6"/>`;
+  const legs = rab ? "M396 162L392 194L412 196L414 164M176 160L150 192L204 196L212 164" : "M400 160L398 192L414 194L414 162M190 160L182 194L200 196L206 162";
+  s += `<path class="body" d="${legs}"/>` + line(legs, "lo");
+  s += hot(`${id}-tail`, pick(o, "tail", "Tail"), "Tail", rab ? `<circle class="body" cx="128" cy="128" r="14"/>${line("M128 114A14 14 0 1 0 128.1 114", "lo")}` : `<path class="tb-out" data-tone="lo" d="${smooth([[134,134],[96,152],[56,154],[24,140],[8,118]])}" stroke-width="6.4"/><path class="tb-in" d="${smooth([[134,134],[96,152],[56,154],[24,140],[8,118]])}" stroke-width="5"/>`);
+  s += hot(`${id}-body`, pick(o, "skin", o.kindLabel || "Rat"), o.kindLabel || "Rat", `<path class="body" d="${smooth(sil, true, 0.35)}"/><path class="ln body-edge" d="${smooth(sil, true, 0.35)}"/>`);
+  const ear = rab ? [[418,96],[400,30],[414,22],[436,92]] : [[430,94],[434,66],[452,66],[456,96]];
+  s += `<path class="body" d="${smooth(ear, true)}"/>` + line(smooth(ear, true), "mid");
+  if (rab) s += `<path class="body" d="${smooth([[432,98],[430,34],[446,30],[448,98]], true)}"/>` + line(smooth([[432,98],[430,34],[446,30],[448,98]], true), "mid");
+  s += `<circle class="eye" cx="${rab ? 470 : 478}" cy="${rab ? 110 : 112}" r="3"/>` + line(rab ? "M498 128L520 122M498 130L520 134" : "M504 128L528 120M504 130L528 132M502 132L524 142", "lo");
+  s += organ([[418,106],[442,102],[452,120],[440,134],[420,130]], I("lung", "Lungs"));
+  s += organ(ellipsePts(432, 142, 9, 8, 10), I("heart", "Heart"));
+  s += tube([[432,136],[410,104],[360,90],[290,86],[220,90],[160,112]], 3.2, { ...I("blood", "Blood vessels"), body: "vein" });
+  s += organ([[384,118],[408,116],[414,146],[396,160],[378,144]], I("liver", "Liver"));
+  s += organ([[338,116],[372,114],[378,138],[362,154],[336,146]], I("stomach", "Stomach"));
+  s += hot(`${id}-visc`, pick(o, "visc", "Capillaries of the viscera"), "Visceral capillaries", `${organ([[286,98],[312,96],[318,108],[306,118],[288,114]], { ...I("kidney", "Kidney") }).replace(/ class="hot[^"]*"/, ' class=""')}${line("M290 104L280 112M300 100L298 90M312 108L326 112M304 116L308 126M286 112L276 120", "lo")}`);
+  s += tube([[338,150],[312,154],[300,140],[280,152],[260,140],[240,154],[220,142],[200,154],[180,140],[152,136],[134,132]], 5, I("gut", "Intestine"));
+  s += organ(ellipsePts(472, 102, 10, 7, 10), I("brain", "Brain"));
+  return { svg: s, pts: { mouth: [510, 130], eso: [470, 128], stomach: [358, 134], gut: [260, 146], anus: [134, 132], heart: [432, 142], vessel: [360, 90], vessel2: [250, 87], visc: [302, 106], liver: [396, 140], cav: [306, 160], skin: [300, 72], skin2: [420, 98], fur: [230, 74] }, lines: {}, w: 530, h: 205 };
+}
+
+// ---------- Flea, side view facing right, magnified: tall, flattened side to side, big hind legs ----------
+export function flea(id, o = {}) {
+  const I = (k, d) => ({ id: `${id}-${k}`, label: d, info: pick(o, k, d), tone: tn(o, k), c: "flea-" + k });
+  const leg = (pts, w) => `<path class="tb-out" data-tone="hi" d="${smooth(pts)}" stroke-width="${w + 1.6}"/><path class="tb-in" d="${smooth(pts)}" stroke-width="${w}"/>`;
+  let s = `<ellipse class="halo" cx="112" cy="176" rx="90" ry="5"/>`;
+  s += leg([[176,112],[186,144],[208,156]], 3) + leg([[134,128],[138,158],[160,170]], 3.4) + leg([[86,122],[58,146],[102,154],[70,176]], 5);
+  s += organ([[36,100],[40,64],[70,36],[118,26],[160,34],[186,56],[194,84],[186,110],[160,128],[110,136],[60,130]], I("abd", "Body: thorax and abdomen, flattened side to side"));
+  s += line("M68 40Q56 86 66 128M98 30Q88 84 98 136M128 28Q120 82 130 134M158 34Q150 82 160 126", "lo");
+  s += organ([[184,56],[206,62],[216,86],[204,104],[188,100]], I("head", "Head"));
+  s += line("M200 64L216 50", "hi") + `<circle class="eye" cx="198" cy="72" r="2.6"/>`;
+  s += tube([[206,98],[212,118],[214,138]], 2.4, I("mouth", "Mouthparts"));
+  s += tube([[204,88],[182,84],[150,84]], 3, { ...I("eso", "Oesophagus"), body: "gutline" });
+  s += organ([[92,72],[134,64],[156,84],[140,104],[98,102]], I("midgut", "Midgut (stomach)"));
+  s += tube([[94,90],[66,94],[46,100],[36,104]], 4, { ...I("hindgut", "Hindgut (rectum)"), body: "gutline" });
+  return { svg: s, pts: { tip: [214, 138], head: [196, 84], eso: [170, 84], midgut: [124, 86], cells: [112, 74], hindgut: [60, 95], anus: [34, 104], out: [10, 118], cavity: [70, 66] }, lines: {}, w: 225, h: 182 };
+}
+
+// ---------- Cloth, bedding or mattress seam: a padded strip with a stitched seam ----------
+export function cloth(id, o = {}) {
+  const w = o.w || 300, h = o.h || 44;
+  const stitch = Array.from({ length: Math.floor((w - 20) / 14) }, (_, i) => `M${10 + i * 14} ${h / 2 - 3}L${18 + i * 14} ${h / 2 + 3}`).join("");
+  return { svg: hot(`${id}-cloth`, pick(o, "cloth", "Cloth"), o.label || "Cloth", `<rect class="og-base" x="0" y="0" width="${w}" height="${h}" rx="8"/><path class="og-edge" data-tone="hi" d="M8 0H${w - 8}Q${w} 0 ${w} 8V${h - 8}Q${w} ${h} ${w - 8} ${h}H8Q0 ${h} 0 ${h - 8}V8Q0 0 8 0Z"/>${line(stitch, "mid")}${line(`M6 ${h / 2}H${w - 6}`, "lo", 'stroke-dasharray="2 4"')}`), pts: { seam: [w / 2, h / 2] }, lines: {}, w, h };
+}
+
+export const ACTORS = { cloth, rodent, flea, human, snail, water, soil, copepod, fish, fly, quad, crab, plant, tadpole, frog, insect, annelid, gill };

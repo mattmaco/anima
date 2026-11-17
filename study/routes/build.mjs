@@ -211,7 +211,7 @@ function build(cy, theme) {
     const k = a.s ?? 1;
     const tr = a.flip ? `translate(${f(a.x + def.w * k)} ${f(a.y)}) scale(${-k} ${k})` : `translate(${f(a.x)} ${f(a.y)}) scale(${k})`;
     let svgA = def.svg;
-    if (a.type === "human" || a.type === "quad") {
+    if (a.type === "human" || a.type === "quad" || a.type === "rodent") {
       // Fade organs this parasite never uses; they come back on hover.
       const keep = new Set([`${a.id}-body`, ...Object.keys(a.info || {}).map((k) => `${a.id}-${k}`), ...cy.stages.flatMap((s) => s.hot || [])]);
       svgA = svgA.replace(/<g class="hot ([^"]*)"((?: data-c="[^"]*")?) id="([^"]+)"/g, (m0, cls, dc, gid) => keep.has(gid) ? m0 : `<g class="hot dim ${cls}"${dc} id="${gid}"`);
@@ -284,7 +284,7 @@ function build(cy, theme) {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${esc(cy.name)} route | Anima study</title><style>${CSS}</style></head><body class="iso" data-theme="${theme}"><main class="iso-page">
 ${navHtml(cy, theme)}<a class="back" href="index.html">← All life cycles</a> <a class="back" id="cyc" data-dark="${cy.cycle}.html" data-light="${cy.cycle}-light.html" href="${cycleHref}" style="margin-left:14px">← ${esc(cy.name)} cycle diagram</a>
 <figure style="margin:0"><div class="iso-plate"><div class="corners" aria-hidden="true"><span class="corner" data-c="fig">Fig ${esc(cy.fig)}</span><span class="corner" data-c="title">${esc(cy.title)}</span><span class="corner" data-c="hint">tap a stage · hover a part · space: pause</span><span class="corner" data-c="readout" data-readout></span></div>${svg}</div>
-<div class="legend"><span><i></i>life cycle</span><span><i class="b"></i>into or out of the definitive host</span><span><i class="r"></i>route of the moving stage (thin)</span>${cy.actors.some((a) => a.inset?.asex) ? `<span><i class="a"></i>asexual multiplication</span>` : ""}</div>
+<div class="legend"><span><i></i>life cycle</span><span><i class="b"></i>${esc(cy.blueLabel || "into or out of the definitive host")}</span><span><i class="r"></i>route of the moving stage (thin)</span>${cy.actors.some((a) => a.inset?.asex) ? `<span><i class="a"></i>asexual multiplication</span>` : ""}</div>
 <figcaption class="caption">${esc(cy.caption)} Stages aren’t drawn to scale with each other or the host: adults are sized to fit the organ they live in, and very long worms are drawn as a strand along it. Real sizes are in each stage’s note. Faded organs play no part in this cycle; hover to see them.</figcaption></figure>
 <div class="rt-controls"><div class="rt-seg" role="group" aria-label="Stage">${buttons}</div><button id="pause" type="button" aria-pressed="false">Pause tour</button><button id="theme" type="button" aria-label="Switch colour theme">☾ Dark</button></div>
 <div class="rt-progress" aria-hidden="true"><i id="bar"></i></div>
