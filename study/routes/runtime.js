@@ -128,6 +128,7 @@ function start() { if (playing && visible && !frame) { last = 0; frame = request
 function stop() { if (frame) cancelAnimationFrame(frame); frame = 0; }
 function setPlaying(v) { playing = v; pauseBtn.textContent = v ? "Pause tour" : "Play tour"; pauseBtn.setAttribute("aria-pressed", String(!v)); if (v) start(); else { stop(); still(); } }
 btns.forEach((b, i) => b.addEventListener("click", () => go(i)));
+for (const b of document.querySelectorAll(".rt-caps button")) b.addEventListener("click", () => go(+b.closest("li").dataset.stage));
 pauseBtn.addEventListener("click", () => setPlaying(!playing));
 document.addEventListener("keydown", (e) => {
   if (e.target.closest("button, a, input, textarea, select")) return;
