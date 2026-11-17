@@ -148,8 +148,6 @@ body{margin:0;background:var(--page);color:var(--text);font:14px/1.6 var(--sans)
 .glyph .f-body,.glyph .f-shell{fill:var(--anatomy-face);stroke:var(--anatomy-hi);stroke-width:1.3}
 .glyph .f-in,.glyph .f-op,.glyph .f-cil,.glyph .f-tailfork,.glyph .f-worm,.glyph .f-tail,.glyph .f-thread,.glyph .f-sheath{stroke:var(--anatomy-hi)}
 .glyph .f-in{stroke:var(--anatomy-mid)}.glyph .f-dot{fill:var(--anatomy-mid)}.glyph .f-core{stroke:var(--anatomy-face)}
-.rt-caps{display:none}
-@media (max-width:640px){.rt-caps{display:grid;gap:2px;list-style:none;margin:10px 0 0;padding:0}.rt-caps button{display:flex;gap:10px;align-items:flex-start;width:100%;text-align:left;background:none;border:0;padding:6px 4px 6px 6px;font:14px/1.45 var(--sans);color:var(--text);cursor:pointer;min-height:40px}.rt-caps b{flex:none;display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--badge);color:#fff;font-size:12px;margin-top:1px}.rt-caps .side b{background:var(--amber)}.rt-caps .on button{color:var(--strong);font-weight:600}.rt-caps .on b{box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--anatomy-lit)}.rt-caps button:focus-visible{outline:2px solid var(--route);outline-offset:2px}}
 @media (max-width:640px){.cap text.ct,.box .gl{display:none}.cap .bdg{r:16px}.cap .ring{r:21px}.cap .bdgn{font-size:16px}.iso-plate{padding:40px 4px 60px}.corner[data-c="hint"]{bottom:20px}.corner[data-c="title"]{font-size:12px}.rt-seg{width:100%}.rt-seg button{flex:1 1 33%;border-left:1px solid var(--line)!important;margin:-1px 0 0 -1px}#pause{margin-left:0;flex:1}#theme{flex:1}.iso-page{margin-top:20px}}
 `;
 
@@ -279,8 +277,6 @@ function build(cy, theme) {
   const hasInf = stages.some((s) => s.icon === "inf"), hasDx = stages.some((s) => s.icon === "dx");
   const legend = `<g transform="translate(24 ${VH - 34})">${hasInf ? ICON.inf(10, 0) + `<text class="legend-t" x="26" y="4">Infective stage</text>` : ""}${hasDx ? `<g transform="translate(0 ${hasInf ? 26 : 0})">${ICON.dx(10, 0)}<text class="legend-t" x="26" y="4">Diagnostic stage</text></g>` : ""}</g>`;
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" class="rt-fig" viewBox="0 0 ${VW} ${VH}" role="img" aria-label="${esc(cy.aria)}">${art}${arrows}<g>${tracks}</g>${boxes}${labels}${caps}${legend}<g id="sprites"></g></svg>`;
-  // On phones the in-figure captions are too small to read, so they are repeated as a list under the figure.
-  const capList = `<ol class="rt-caps" aria-label="Stages">${stages.map((st, si) => st.cap && st.cap.text ? `<li class="cap${st.side ? " side" : ""}" data-stage="${si}"><button type="button"><b>${si + 1}</b><span>${esc(st.cap.text)}</span></button></li>` : "").join("")}</ol>`;
   const buttons = stages.map((s, i) => `<button type="button" class="${s.side ? "side-b" : ""}" aria-pressed="${i === 0}"><b>${i + 1}</b>${esc(s.short)}</button>`).join("");
   const DATA = { stages: stages.map((s) => ({ title: s.title, when: s.when || "", text: s.text, readout: s.readout, dur: s.dur || 4200, hot: s.hot || [], moves: s.moves, still: s.still })), routes };
   const src = (cy.sources || []).map((s) => `<li>${s}</li>`).join("");
@@ -289,7 +285,7 @@ function build(cy, theme) {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${esc(cy.name)} route | Anima study</title><style>${CSS}</style></head><body class="iso" data-theme="${theme}"><main class="iso-page">
 ${navHtml(cy, theme)}<a class="back" href="index.html">← All life cycles</a> <a class="back" id="cyc" data-dark="${cy.cycle}.html" data-light="${cy.cycle}-light.html" href="${cycleHref}" style="margin-left:14px">← ${esc(cy.name)} cycle diagram</a>
 <figure style="margin:0"><div class="iso-plate"><div class="corners" aria-hidden="true"><span class="corner" data-c="fig">Fig ${esc(cy.fig)}</span><span class="corner" data-c="title">${esc(cy.title)}</span><span class="corner" data-c="hint">tap a stage · hover a part · space: pause</span><span class="corner" data-c="readout" data-readout></span></div>${svg}</div>
-${capList}</figure>
+</figure>
 <div class="rt-controls"><div class="rt-seg" role="group" aria-label="Stage">${buttons}</div><button id="pause" type="button" aria-pressed="false">Pause tour</button><button id="theme" type="button" aria-label="Switch colour theme">☾ Dark</button></div>
 <div class="rt-progress" aria-hidden="true"><i id="bar"></i></div>
 <section class="rt-stage" aria-live="polite"><h2 id="st-title"></h2><p class="rt-when" id="st-when"></p><p id="st-text"></p></section>
