@@ -287,7 +287,7 @@ export function rodent(id, o = {}) {
   s += hot(`${id}-visc`, pick(o, "visc", "Capillaries of the viscera"), "Visceral capillaries", `${organ([[286,98],[312,96],[318,108],[306,118],[288,114]], { ...I("kidney", "Kidney") }).replace(/ class="hot[^"]*"/, ' class=""')}${line("M290 104L280 112M300 100L298 90M312 108L326 112M304 116L308 126M286 112L276 120", "lo")}`);
   s += tube([[338,150],[312,154],[300,140],[280,152],[260,140],[240,154],[220,142],[200,154],[180,140],[152,136],[134,132]], 5, I("gut", "Intestine"));
   s += organ(ellipsePts(472, 102, 10, 7, 10), I("brain", "Brain"));
-  return { svg: s, pts: { mouth: [510, 130], eso: [470, 128], stomach: [358, 134], gut: [260, 146], anus: [134, 132], heart: [432, 142], vessel: [360, 90], vessel2: [250, 87], visc: [302, 106], liver: [396, 140], skin: [300, 72], skin2: [420, 98], fur: [230, 74] }, lines: {}, w: 530, h: 205 };
+  return { svg: s, pts: { mouth: [510, 130], eso: [470, 128], stomach: [358, 134], gut: [260, 146], anus: [134, 132], heart: [432, 142], vessel: [360, 90], vessel2: [250, 87], visc: [302, 106], liver: [396, 140], cav: [306, 160], skin: [300, 72], skin2: [420, 98], fur: [230, 74] }, lines: {}, w: 530, h: 205 };
 }
 
 // ---------- Flea, side view facing right, magnified: tall, flattened side to side, big hind legs ----------
@@ -304,7 +304,7 @@ export function flea(id, o = {}) {
   s += tube([[204,88],[182,84],[150,84]], 3, { ...I("eso", "Oesophagus"), body: "gutline" });
   s += organ([[92,72],[134,64],[156,84],[140,104],[98,102]], I("midgut", "Midgut (stomach)"));
   s += tube([[94,90],[66,94],[46,100],[36,104]], 4, { ...I("hindgut", "Hindgut (rectum)"), body: "gutline" });
-  return { svg: s, pts: { tip: [214, 138], head: [196, 84], eso: [170, 84], midgut: [124, 86], cells: [112, 74], hindgut: [60, 95], anus: [34, 104], out: [10, 118] }, lines: {}, w: 225, h: 182 };
+  return { svg: s, pts: { tip: [214, 138], head: [196, 84], eso: [170, 84], midgut: [124, 86], cells: [112, 74], hindgut: [60, 95], anus: [34, 104], out: [10, 118], cavity: [70, 66] }, lines: {}, w: 225, h: 182 };
 }
 
 export const ACTORS = { rodent, flea, human, snail, water, soil, copepod, fish, fly, quad, crab, plant, tadpole, frog, insect, annelid, gill };
