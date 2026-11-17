@@ -130,7 +130,7 @@ export function fish(id, o = {}) {
   s += line(smooth([[254,48],[262,74],[254,102]]), "hi");
   s += `<circle class="eye" cx="286" cy="64" r="4"/>`;
   s += line("M304 80L312 76", "hi");
-  return { svg: s, pts: { mouth: [312, 78], gut: [200, 98], gut2: [140, 100], flesh: [150, 64], flesh2: [190, 70], gills: [240, 78] }, lines: {}, w: 320, h: 140 };
+  return { svg: s, pts: { mouth: [312, 78], gut: [200, 98], gut2: [140, 100], flesh: [150, 64], flesh2: [190, 70], gills: [240, 78], skin: [180, 32], skin2: [120, 110], fin: [16, 66] }, lines: {}, w: 320, h: 140 };
 }
 
 // ---------- Blood-feeding fly / mosquito, side view facing right ----------
