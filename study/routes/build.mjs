@@ -102,6 +102,7 @@ body{margin:0;background:var(--page);color:var(--text);font:14px/1.6 var(--sans)
 .legend i{display:inline-block;width:20px;height:0;border-top:5px solid var(--red);vertical-align:middle;margin-right:6px}
 .legend i.b{border-top-color:var(--blue)}.legend i.r{border-top:2.4px solid var(--route)}.legend i.a{border-top:2px dashed var(--amber)}
 .caption{color:var(--muted);font-size:13px;line-height:1.55;margin:10px 2px 0}
+.rt-key{margin:18px 0 0;padding-top:12px;border-top:1px solid var(--line)}
 .sources{margin:22px 2px;color:var(--muted);font-size:12.5px;line-height:1.65}
 .sources h2{font:600 13px var(--sans);color:var(--text);margin:16px 0 8px}
 .sources ul{padding-left:18px}.sources li{margin:5px 0}
@@ -288,12 +289,13 @@ function build(cy, theme) {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${esc(cy.name)} route | Anima study</title><style>${CSS}</style></head><body class="iso" data-theme="${theme}"><main class="iso-page">
 ${navHtml(cy, theme)}<a class="back" href="index.html">← All life cycles</a> <a class="back" id="cyc" data-dark="${cy.cycle}.html" data-light="${cy.cycle}-light.html" href="${cycleHref}" style="margin-left:14px">← ${esc(cy.name)} cycle diagram</a>
 <figure style="margin:0"><div class="iso-plate"><div class="corners" aria-hidden="true"><span class="corner" data-c="fig">Fig ${esc(cy.fig)}</span><span class="corner" data-c="title">${esc(cy.title)}</span><span class="corner" data-c="hint">tap a stage · hover a part · space: pause</span><span class="corner" data-c="readout" data-readout></span></div>${svg}</div>
-${capList}<div class="legend"><span><i></i>life cycle</span><span><i class="b"></i>${esc(cy.blueLabel || "into or out of the definitive host")}</span><span><i class="r"></i>route of the moving stage (thin)</span>${cy.actors.some((a) => a.inset?.asex) ? `<span><i class="a"></i>asexual multiplication</span>` : ""}</div>
-<figcaption class="caption">${esc(cy.caption)} Stages aren’t drawn to scale with each other or the host: adults are sized to fit the organ they live in, and very long worms are drawn as a strand along it. Real sizes are in each stage’s note. Faded organs play no part in this cycle; hover to see them.</figcaption></figure>
+${capList}</figure>
 <div class="rt-controls"><div class="rt-seg" role="group" aria-label="Stage">${buttons}</div><button id="pause" type="button" aria-pressed="false">Pause tour</button><button id="theme" type="button" aria-label="Switch colour theme">☾ Dark</button></div>
 <div class="rt-progress" aria-hidden="true"><i id="bar"></i></div>
 <section class="rt-stage" aria-live="polite"><h2 id="st-title"></h2><p class="rt-when" id="st-when"></p><p id="st-text"></p></section>
 <p id="info" class="rt-info">Hover or tap any part of the figure for details.</p>
+<section class="rt-key" aria-label="Key and scale"><div class="legend"><span><i></i>life cycle</span><span><i class="b"></i>${esc(cy.blueLabel || "into or out of the definitive host")}</span><span><i class="r"></i>route of the moving stage (thin)</span>${cy.actors.some((a) => a.inset?.asex) ? `<span><i class="a"></i>asexual multiplication</span>` : ""}</div>
+<p class="caption">${esc(cy.caption)} Stages aren’t drawn to scale with each other or the host: adults are sized to fit the organ they live in, and very long worms are drawn as a strand along it. Real sizes are in each stage’s note. Faded organs play no part in this cycle; hover to see them.</p></section>
 <footer class="sources"><h2>Sources</h2><ul>${src}</ul><h2>What was simplified</h2><ul>${simp}</ul><p>Educational study figure. Check it against your course materials; not medical advice.</p></footer>
 </main><script>window.CYCLE=${JSON.stringify(DATA)};</script><script type="module">${RUNTIME}</script></body></html>`;
 }
