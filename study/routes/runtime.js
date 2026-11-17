@@ -28,7 +28,7 @@ const pool = Array.from({ length: POOL }, () => {
   return { g, forms, waves: [...g.querySelectorAll("[data-wave]")], cur: null, ang: 0 };
 });
 function setForm(s, k) { if (s.cur === k) return; if (s.cur) s.forms[s.cur].style.display = "none"; s.forms[k].style.display = ""; s.cur = k; }
-const STILL = { cocoon: 1, eggrow: 1, balC: 1, amoC4: 1, amoC8: 1, amoC1: 1, chiloC: 1, giardC: 1, eggpacket: 1, cysticercoid: 1, ring: 1, schiz: 1, gamet: 1, oocyst: 1, mero: 1, pcell: 1, ama: 1, cysticercus: 1, hydatid: 1, tcyst: 1, acanthor: 1, coil: 1, oncosphere: 1, eggplug: 1, eggplugl: 1, eggflat: 1, eggs: 1, eggl: 1, egg: 1, eggop: 1, eggspine: 1, eggmam: 1, cyst: 1, coracidium: 0, sac: 0 };
+const STILL = { eggmass: 1, cocoon: 1, eggrow: 1, balC: 1, amoC4: 1, amoC8: 1, amoC1: 1, chiloC: 1, giardC: 1, eggpacket: 1, cysticercoid: 1, ring: 1, schiz: 1, gamet: 1, oocyst: 1, mero: 1, pcell: 1, ama: 1, cysticercus: 1, hydatid: 1, tcyst: 1, acanthor: 1, coil: 1, oncosphere: 1, eggplug: 1, eggplugl: 1, eggflat: 1, eggs: 1, eggl: 1, egg: 1, eggop: 1, eggspine: 1, eggmam: 1, cyst: 1, coracidium: 0, sac: 0 };
 
 // ----- long worms drawn as a strand along their route -----
 const strands = [];
