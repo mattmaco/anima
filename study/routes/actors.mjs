@@ -147,7 +147,9 @@ export function fly(id, o = {}) {
   s += tube([[172,70],[150,66],[112,70],[70,70],[24,68]], 2.6, { ...I("midgut", "Midgut"), body: "gutline" });
   s += line(mosq ? "M124 82L96 112L70 136M138 84L132 116L118 140M150 80L176 112L200 136" : "M120 84L104 120L96 136M136 86L134 124L126 140M150 80L164 118L176 136", "hi");
   s += line(mosq ? "M180 60L206 40L222 34M178 58L196 38L206 26" : "M184 58L204 40M182 56L196 36", "hi");
-  return { svg: s, pts: mosq ? { tip: [232, 98], head: [174, 68], thorax: [136, 64], midgut: [90, 71] } : { tip: [192, 86], head: [174, 68], thorax: [136, 64], midgut: [90, 74] }, lines: {}, w: 240, h: 140 };
+  if (o.sal) s += organ([[144,58],[158,50],[166,60],[158,72],[146,70]], I("sal", "Salivary glands"));
+  const extra = { sal: [156, 61], wall: [80, 62] };
+  return { svg: s, pts: mosq ? { tip: [232, 98], head: [174, 68], thorax: [136, 64], midgut: [90, 71], ...extra } : { tip: [192, 86], head: [174, 68], thorax: [136, 64], midgut: [90, 74], ...extra }, lines: {}, w: 240, h: 140 };
 }
 
 
