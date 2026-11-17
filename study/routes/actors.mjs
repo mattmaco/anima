@@ -307,4 +307,11 @@ export function flea(id, o = {}) {
   return { svg: s, pts: { tip: [214, 138], head: [196, 84], eso: [170, 84], midgut: [124, 86], cells: [112, 74], hindgut: [60, 95], anus: [34, 104], out: [10, 118], cavity: [70, 66] }, lines: {}, w: 225, h: 182 };
 }
 
-export const ACTORS = { rodent, flea, human, snail, water, soil, copepod, fish, fly, quad, crab, plant, tadpole, frog, insect, annelid, gill };
+// ---------- Cloth, bedding or mattress seam: a padded strip with a stitched seam ----------
+export function cloth(id, o = {}) {
+  const w = o.w || 300, h = o.h || 44;
+  const stitch = Array.from({ length: Math.floor((w - 20) / 14) }, (_, i) => `M${10 + i * 14} ${h / 2 - 3}L${18 + i * 14} ${h / 2 + 3}`).join("");
+  return { svg: hot(`${id}-cloth`, pick(o, "cloth", "Cloth"), o.label || "Cloth", `<rect class="og-base" x="0" y="0" width="${w}" height="${h}" rx="8"/><path class="og-edge" data-tone="hi" d="M8 0H${w - 8}Q${w} 0 ${w} 8V${h - 8}Q${w} ${h} ${w - 8} ${h}H8Q0 ${h} 0 ${h - 8}V8Q0 0 8 0Z"/>${line(stitch, "mid")}${line(`M6 ${h / 2}H${w - 6}`, "lo", 'stroke-dasharray="2 4"')}`), pts: { seam: [w / 2, h / 2] }, lines: {}, w, h };
+}
+
+export const ACTORS = { cloth, rodent, flea, human, snail, water, soil, copepod, fish, fly, quad, crab, plant, tadpole, frog, insect, annelid, gill };
