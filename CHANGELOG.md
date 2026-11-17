@@ -10,6 +10,7 @@ All notable changes to this project are recorded here. The format follows [Keep 
 - `sunflower-bend`, a live figure of BendLab's two-state phototropism model (sensing lag, saturating bend rate), with parameter sliders, a flip-the-light option and a trajectory chart that shows when the rate limit cannot be read from the data, and three fitted presets supplied by BendLab's author. Credited to BendLab, with a link to its repository.
 - Study mode `trajectory` view: deterministic runs over generations with dashed equilibrium marks and an automatic y-axis for small frequencies.
 - Study mode `table` view: rows of computed values with flagged cells (red ink and a ✗), short labels for phones and a height that follows the row count.
+- Study mode route animations (`study/routes/`): a generator for animated parasite life-cycle pages (schematic hosts with named route points, outlined stage drawings, a stage tour, numbered callouts and cycle arrows, organs faded when a cycle doesn't use them, adults sized to their organ and long worms drawn as strands), with collision, size and pixel-diff checks. Its per-cycle data is course material and stays in the git-ignored `study/local/routes/`.
 
 ### Changed
 
