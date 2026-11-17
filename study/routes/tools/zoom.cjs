@@ -1,0 +1,11 @@
+const path = require('path');
+const OUT = process.env.ROUTES_OUT || path.join(__dirname, '../../local/routes/out') + '/';
+const SHOTS = process.env.ROUTES_SHOTS || path.join(__dirname, '../../local/routes/shots');
+require('fs').mkdirSync(SHOTS, { recursive: true });
+const { chromium } = require('playwright');
+(async () => { const b = await chromium.launch(); const p = await b.newPage({ viewport: { width: 1000, height: 900 }, deviceScaleFactor: 2 });
+ await p.goto('file://' + OUT + '02-typical-digenean-route-light.html');
+ await p.evaluate(() => { __rt.setPlaying(false); __rt.show(3, 0.5); });
+ const box = await p.locator('.rt-fig').boundingBox(); const k = box.width / 1000;
+ await p.screenshot({ path: SHOTS + '/zoom1.png', clip: { x: box.x + 560 * k, y: box.y + 40 * k, width: 440 * k, height: 520 * k } });
+ await b.close(); })();
